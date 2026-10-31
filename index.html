@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6c2bd9">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<title>Quick Delivery</title>
+<style>
+:root{--bg:#f6f4fb;--card:#fff;--tx:#1d1b26;--mu:#6b6880;--pr:#6c2bd9;--ok:#1a9d5c;--bd:#e4e0ef;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#15131c;--card:#201d2b;--tx:#f0eef7;--mu:#a29fb5;--pr:#a67bff;--ok:#3ccf86;--bd:#332f43}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI","Noto Sans Bengali",sans-serif}
+#top{position:sticky;top:0;background:var(--bg);padding:10px 14px 6px;z-index:5}
+.tabs{display:flex;gap:6px;margin-top:8px}
+.tabs button{flex:1;padding:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit}
+.tabs button.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+main{padding:4px 14px 40px;max-width:760px;margin:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px}
+.em{font-size:38px;text-align:center}.card img{width:100%;height:90px;object-fit:cover;border-radius:8px}
+.pn{font-weight:600}.mu{color:var(--mu)}
+.b{display:inline-block;background:var(--pr);color:#fff;border:0;border-radius:9px;padding:8px 12px;font:inherit;text-decoration:none;text-align:center}
+.b.w{width:100%;margin-top:8px}.b.g{background:var(--ok)}.b.l{background:transparent;color:var(--mu);border:1px solid var(--bd)}
+input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit;margin:3px 0}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--bd);white-space:nowrap}
+.s-delivered{background:var(--ok);color:#fff}
+h2{font-size:16px;margin:16px 0 8px}
+.stack>*{margin-bottom:8px}a{color:var(--pr)}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<main id="app"></main>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===== এই অংশটা নিজের তথ্য দিয়ে বদলান ===== */
+const firebaseConfig={apiKey:"AIzaSyCNPi7mLkWMz1kGo3b2YXstjM65wbB0ZLw",authDomain:"kacha-bazaar-7fda3.firebaseapp.com",projectId:"kacha-bazaar-7fda3",appId:"1:117258766044:web:95ece03ae97604d7efd619"};
+const STORE="Kacha Bazaar";
+const UPI_ID="yourname@upi";
+/* ========================================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ST={pending:"Pending",assigned:"Assigned",accepted:"Accepted",collected:"Collected",delivered:"Delivered"};
+const ACTIVE=["assigned","accepted","collected"];
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+if(firebaseConfig.apiKey.startsWith("YOUR")){document.getElementById("app").innerHTML='<div class="card"><b>সেটআপ বাকি</b><p>index.html ফাইলে firebaseConfig বসান।</p></div>';throw new Error("config missing")}
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();
+let me=null,unsubs=[],cart={},products=[],orders=[],riders=[],tab="shop",pay="cod",signing=false;
+
+function stop(){unsubs.forEach(u=>u());unsubs=[]}
+function ping(m){try{navigator.vibrate&&navigator.vibrate([200,100,200]);if(window.Notification&&Notification.permission==="granted")new Notification(m)}catch(e){}}
+function soft(){const e=document.activeElement;if(e&&/INPUT|SELECT/.test(e.tagName))return;render()}
+function listen(q,set,msg){let f=true;unsubs.push(q.onSnapshot(s=>{const a=[];s.forEach(d=>a.push(Object.assign({id:d.id},d.data())));if(!f&&msg&&s.docChanges().some(c=>c.type==="added"))ping(msg);set(a);f=false;soft()},e=>alert(e.message)))}
+
+let scr="id",ctx={},resetting=false;
+const pw=p=>"kb#"+p+"#bazaar";
+const isPin=p=>/^\d{4}$/.test(p);
+const normId=v=>{v=v.trim().toLowerCase();const d=v.replace(/\D/g,"");return v.includes("@")?v:(d.length>=10?d.slice(-10):"")};
+function route(u){if(!u){me=null;scr="id";ctx={};return render(true)}
+if(!u.emailVerified){me=null;scr="verify";ctx.email=u.email;return render(true)}
+boot(u)}
+auth.onAuthStateChanged(u=>{if(signing||resetting)return;stop();me=null;route(u)});
+if(auth.isSignInWithEmailLink(location.href)){resetting=true;(async()=>{try{
+const em=localStorage.getItem("qd_reset")||prompt("যে ইমেইলে লিংক এসেছে সেটা লিখুন");
+await auth.signInWithEmailLink(em.trim(),location.href);history.replaceState(null,"",location.pathname);scr="newpin";render(true)
+}catch(e){resetting=false;alert(e.message);history.replaceState(null,"",location.pathname);route(auth.currentUser)}})()}
+async function boot(u){
+const d=await db.collection("users").doc(u.uid).get();
+if(!d.exists){alert("প্রোফাইল পাওয়া যায়নি");return auth.signOut()}
+me=Object.assign({uid:u.uid},d.data());tab=me.role=="admin"?"orders":me.role=="rider"?"rider":"shop";
+const O=db.collection("orders");
+listen(db.collection("products"),a=>products=a);
+if(me.role=="customer")listen(O.where("uid","==",me.uid),a=>orders=a);
+if(me.role=="admin"){listen(O,a=>orders=a,"নতুন অর্ডার এসেছে!");listen(db.collection("users").where("role","==","rider"),a=>riders=a)}
+if(me.role=="rider")listen(O.where("riderId","==",me.uid),a=>orders=a,"নতুন অর্ডার অ্যাসাইন হয়েছে!");
+if(window.Notification&&Notification.permission==="default")Notification.requestPermission();
+render(true)}
+
+function authV(){
+const B=(t,f,c)=>`<button class="b w ${c||""}" onclick="${f}">${t}</button>`;
+const pin=(id,ph)=>`<input id="${id}" type="password" inputmode="numeric" maxlength="4" placeholder="${ph}">`;
+let h='<div class="card stack">';
+if(scr=="id")h+=`<h2>লগইন</h2><input id="ix" placeholder="মোবাইল নম্বর বা ইমেইল" value="${esc(ctx.id||"")}">`+B("এগিয়ে যান","next()");
+else if(scr=="pin")h+=`<h2>৪ ডিজিটের পাসওয়ার্ড দিন</h2><div class="mu">${esc(ctx.id)}</div>${pin("pn","••••")}`+B("লগইন","login()")+B("পাসওয়ার্ড ভুলে গেছেন?","forgot()","l")+B("অন্য নম্বর/ইমেইল","scr='id';render(true)","l");
+else if(scr=="new")h+=`<h2>নতুন অ্যাকাউন্ট</h2><div class="mu">এই তথ্যে কোনো অ্যাকাউন্ট নেই। নিচের তথ্য দিয়ে খুলে নিন।</div><input id="nm" placeholder="নাম"><input id="ph" type="tel" placeholder="মোবাইল নম্বর (১০ ডিজিট)" value="${esc(ctx.ph||"")}"><input id="em" type="email" placeholder="ইমেইল" value="${esc(ctx.em||"")}"><select id="rl"><option value="customer">আমি কাস্টমার</option><option value="rider">আমি রাইডার</option></select>${pin("p1","নতুন ৪ ডিজিটের পাসওয়ার্ড")}${pin("p2","আবার লিখুন")}`+B("অ্যাকাউন্ট খুলুন","signup()")+B("পিছনে","scr='id';render(true)","l");
+else if(scr=="verify")h+=`<h2>ইমেইল ভেরিফাই করুন</h2><p>${esc(ctx.email)} ঠিকানায় একটা লিংক পাঠানো হয়েছে (না পেলে Spam দেখুন)। লিংকে ক্লিক করে ফিরে এসে নিচের বাটন চাপুন।</p>`+B("ভেরিফাই করেছি","chk()")+B("লিংক আবার পাঠান","resend()","l")+B("বের হন","auth.signOut()","l");
+else if(scr=="forgot")h+=`<h2>পাসওয়ার্ড বদলান</h2><p>${esc(ctx.email)} ঠিকানায় লিংক পাঠানো হয়েছে। লিংকে ক্লিক করলে নতুন ৪ ডিজিট দেওয়ার পাতা খুলবে।</p>`+B("লগইনে ফিরুন","scr='id';render(true)","l");
+else if(scr=="newpin")h+=`<h2>নতুন ৪ ডিজিটের পাসওয়ার্ড</h2>${pin("p1","নতুন পাসওয়ার্ড")}${pin("p2","আবার লিখুন")}`+B("সেভ করুন","setPin()");
+return h+"</div>"}
+async function next(){const k=normId($("#ix").value);if(!k)return alert("সঠিক মোবাইল নম্বর বা ইমেইল দিন");
+try{const d=await db.collection("lookup").doc(k).get();ctx.id=$("#ix").value.trim();
+if(d.exists){ctx.email=d.data().email;scr="pin"}else{scr="new";ctx.em=k.includes("@")?k:"";ctx.ph=k.includes("@")?"":k}
+render(true)}catch(e){alert(e.message)}}
+async function login(){const p=$("#pn").value;if(!isPin(p))return alert("৪ ডিজিটের সংখ্যা দিন");
+try{await auth.signInWithEmailAndPassword(ctx.email,pw(p))}catch(e){alert(e.code=="auth/too-many-requests"?"অনেকবার ভুল হয়েছে, কিছুক্ষণ পরে চেষ্টা করুন":"পাসওয়ার্ড ভুল")}}
+async function signup(){
+const nm=$("#nm").value.trim(),ph=$("#ph").value.replace(/\D/g,"").slice(-10),em=$("#em").value.trim().toLowerCase(),p=$("#p1").value;
+if(!nm||ph.length!=10||!em.includes("@"))return alert("নাম, ১০ ডিজিটের মোবাইল ও ইমেইল দিন");
+if(!isPin(p)||p!=$("#p2").value)return alert("দুইবার একই ৪ ডিজিট দিন");
+try{signing=true;
+for(const k of [ph,em])if((await db.collection("lookup").doc(k).get()).exists)throw new Error("এই মোবাইল বা ইমেইল দিয়ে আগেই অ্যাকাউন্ট আছে। লগইন করুন।");
+const u=(await auth.createUserWithEmailAndPassword(em,pw(p))).user;
+await db.collection("users").doc(u.uid).set({name:nm,phone:ph,email:em,role:$("#rl").value,available:false});
+await db.collection("lookup").doc(ph).set({email:em,uid:u.uid});
+await db.collection("lookup").doc(em).set({email:em,uid:u.uid});
+await u.sendEmailVerification();signing=false;route(u)
+}catch(e){signing=false;alert(e.message)}}
+async function chk(){try{const u=auth.currentUser;await u.reload();if(!u.emailVerified)return alert("এখনো ভেরিফাই হয়নি। ইমেইলের লিংকে ক্লিক করুন।");await u.getIdToken(true);route(u)}catch(e){alert(e.message)}}
+function resend(){auth.currentUser.sendEmailVerification().then(()=>alert("লিংক আবার পাঠানো হয়েছে")).catch(e=>alert(e.message))}
+async function forgot(){try{localStorage.setItem("qd_reset",ctx.email);await auth.sendSignInLinkToEmail(ctx.email,{url:location.origin+location.pathname,handleCodeInApp:true});scr="forgot";render(true)}catch(e){alert(e.message)}}
+async function setPin(){const p=$("#p1").value;if(!isPin(p)||p!=$("#p2").value)return alert("দুইবার একই ৪ ডিজিট দিন");
+try{const u=auth.currentUser;await u.updatePassword(pw(p));localStorage.removeItem("qd_reset");resetting=false;alert("নতুন পাসওয়ার্ড সেট হয়েছে");await u.getIdToken(true);route(u)}catch(e){alert(e.message)}}
+
+const img=p=>/^https?:/.test(p.img||"")?`<img src="${esc(p.img)}" alt="">`:`<div class="em">${esc(p.img||"📦")}</div>`;
+const itemsT=o=>o.items.map(i=>esc(i.name)+" × "+i.q).join(", ");
+const badge=o=>`<span class="tag ${o.status=="delivered"?"s-delivered":""}">${o.status=="delivered"?"Completed ✓":ST[o.status]}</span>`;
+const byTime=(a,b)=>((b.createdAt&&b.createdAt.seconds)||9e9)-((a.createdAt&&a.createdAt.seconds)||9e9);
+const busy=r=>orders.some(o=>o.riderId==r.id&&ACTIVE.includes(o.status));
+const free=r=>r.available&&!busy(r);
+
+function shopV(){
+let h=`<div class="grid">${products.filter(p=>p.stock>0).map(p=>`<div class="card">${img(p)}<div class="pn">${esc(p.name)}</div><div class="mu">₹${p.price}</div><button class="b w" onclick="add('${p.id}')">যোগ করুন${cart[p.id]?" ("+cart[p.id]+")":""}</button></div>`).join("")||'<p class="mu">এখনো কোনো প্রোডাক্ট নেই।</p>'}</div>`;
+const ids=Object.keys(cart).filter(id=>products.some(p=>p.id==id));if(!ids.length)return h;
+let tot=0;h+='<h2>কার্ট</h2><div class="card stack">';
+ids.forEach(id=>{const p=products.find(x=>x.id==id);tot+=p.price*cart[id];h+=`<div class="row"><span>${esc(p.name)} × ${cart[id]}</span><span>₹${p.price*cart[id]} <button class="b l" onclick="dec('${id}')">−</button></span></div>`});
+h+=`<div class="row"><b>মোট</b><b>₹${tot}</b></div><input id="cn" placeholder="নাম" value="${esc(me.name)}"><input id="cp" type="tel" placeholder="ফোন" value="${esc(me.phone)}"><input id="ca" placeholder="ডেলিভারি ঠিকানা">
+<select onchange="pay=this.value;render(true)"><option value="cod">Cash on Delivery</option><option value="upi" ${pay=="upi"?"selected":""}>UPI</option></select>`;
+if(pay=="upi")h+=`<div class="mu">UPI ID: <b>${esc(UPI_ID)}</b></div><a class="b" href="upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(STORE)}&am=${tot}&cu=INR">UPI অ্যাপে ₹${tot} দিন</a><input id="cu" placeholder="পেমেন্টের পর UTR / ট্রানজেকশন নম্বর">`;
+return h+'<button class="b w" onclick="place()">অর্ডার করুন</button></div>'}
+function add(id){const p=products.find(x=>x.id==id);if((cart[id]||0)>=p.stock)return alert("স্টক শেষ");cart[id]=(cart[id]||0)+1;render(true)}
+function dec(id){if(--cart[id]<=0)delete cart[id];render(true)}
+async function place(){
+const n=$("#cn").value.trim(),p=$("#cp").value.trim(),ad=$("#ca").value.trim(),u=pay=="upi"?$("#cu").value.trim():"";
+if(!n||p.length<10||!ad)return alert("নাম, ফোন ও ঠিকানা দিন");
+if(pay=="upi"&&u.length<6)return alert("UPI ট্রানজেকশন নম্বর দিন");
+const items=Object.keys(cart).map(id=>{const x=products.find(y=>y.id==id);return{id,name:x.name,q:cart[id],price:x.price}});
+const total=items.reduce((s,i)=>s+i.price*i.q,0);
+try{await db.collection("orders").add({uid:me.uid,name:n,phone:p,addr:ad,items,total,pay,utr:u,status:"pending",riderId:null,riderName:null,createdAt:TS()});cart={};tab="orders";render(true)}catch(e){alert(e.message)}}
+function myOrdersV(){return orders.slice().sort(byTime).map(o=>`<div class="card stack"><div class="row"><b>₹${o.total} · ${o.pay.toUpperCase()}</b>${badge(o)}</div><div class="mu">${itemsT(o)}</div>${o.riderName?`<div class="mu">রাইডার: ${esc(o.riderName)}</div>`:""}</div>`).join("")||'<p class="mu">কোনো অর্ডার নেই।</p>'}
+
+function adminV(){
+if(tab=="riders")return riders.map(r=>`<div class="card row"><span>${esc(r.name)} · <a href="tel:${esc(r.phone)}">${esc(r.phone)}</a></span><span class="tag">${!r.available?"Offline":busy(r)?"Busy":"Available"}</span></div>`).join("")||'<p class="mu">কোনো রাইডার নেই।</p>';
+if(tab=="products")return `<div class="card stack"><input id="pn" placeholder="প্রোডাক্টের নাম"><input id="pp" type="number" placeholder="দাম ₹"><input id="ps" type="number" placeholder="স্টক"><input id="pi" placeholder="ইমোজি বা ছবির লিংক (https://...)"><button class="b w" onclick="addP()">যোগ করুন</button></div>`+products.map(p=>`<div class="card row"><span>${esc(p.name)} · ₹${p.price} · স্টক ${p.stock}</span><span><button class="b l" onclick="stk('${p.id}')">স্টক</button> <button class="b l" onclick="delP('${p.id}')">মুছুন</button></span></div>`).join("");
+return orders.slice().sort(byTime).map(o=>{
+let h=`<div class="card stack"><div class="row"><b>${esc(o.name)} · ₹${o.total}</b>${badge(o)}</div><div class="mu">${itemsT(o)}<br>📍 ${esc(o.addr)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a><br>${o.pay=="upi"?"UPI · UTR: "+esc(o.utr):"Cash on Delivery"}</div>`;
+if(o.status=="pending")h+=`<select id="r${o.id}">${riders.map(r=>`<option value="${r.id}" ${free(r)?"":"disabled"}>${esc(r.name)} (${free(r)?"Available":busy(r)?"Busy":"Offline"})</option>`).join("")||"<option>কোনো রাইডার নেই</option>"}</select><button class="b w" onclick="assign('${o.id}')">রাইডার Assign করুন</button>`;
+else h+=`<div class="mu">রাইডার: ${esc(o.riderName)}</div>`;
+return h+"</div>"}).join("")||'<p class="mu">কোনো অর্ডার নেই।</p>'}
+async function assign(id){const rid=$("#r"+id).value,r=riders.find(x=>x.id==rid);if(!r||!free(r))return alert("কোনো Available রাইডার নেই");
+try{await db.collection("orders").doc(id).update({riderId:r.id,riderName:r.name,status:"assigned",assignedAt:TS()})}catch(e){alert(e.message)}}
+async function addP(){const n=$("#pn").value.trim(),p=+$("#pp").value,s=+$("#ps").value;if(!n||!p||s<0)return alert("নাম, দাম ও স্টক দিন");
+try{await db.collection("products").add({name:n,price:p,stock:s,img:$("#pi").value.trim()});["#pn","#pp","#ps","#pi"].forEach(x=>$(x).value="")}catch(e){alert(e.message)}}
+async function stk(id){const v=prompt("নতুন স্টক সংখ্যা");if(v===null||isNaN(+v))return;db.collection("products").doc(id).update({stock:+v})}
+function delP(id){if(confirm("মুছে ফেলবেন?"))db.collection("products").doc(id).delete()}
+
+function riderV(){
+let h=`<div class="card row"><b>ডিউটিতে আছি (Available)</b><input type="checkbox" style="width:auto;transform:scale(1.5)" ${me.available?"checked":""} onchange="duty(this.checked)"></div><h2>আমার ডেলিভারি</h2>`;
+const mine=orders.filter(o=>o.status!="delivered").sort(byTime);
+if(!mine.length)h+='<p class="mu">কোনো অর্ডার অ্যাসাইন হয়নি।</p>';
+mine.forEach(o=>{const nx={assigned:["accepted","Accept Order",""],accepted:["collected","স্টোর থেকে Collected","g"],collected:["delivered","কাস্টমারকে Delivered","g"]}[o.status];
+h+=`<div class="card stack"><div class="row"><b>${esc(o.name)}</b>${badge(o)}</div><div class="mu">${itemsT(o)}<br>📍 ${esc(o.addr)}<br>📞 <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></div><div><b>${o.pay=="cod"?"টাকা নিতে হবে: ₹"+o.total:"UPI-তে পেইড"}</b></div><button class="b w ${nx[2]}" onclick="setS('${o.id}','${nx[0]}')">${nx[1]}</button></div>`});
+return h}
+function duty(v){me.available=v;db.collection("users").doc(me.uid).update({available:v}).catch(e=>alert(e.message))}
+function setS(id,s){db.collection("orders").doc(id).update({status:s}).catch(e=>alert(e.message))}
+
+function render(force){
+const a=$("#app");
+if(!me){$("#top").innerHTML="";a.innerHTML=authV();return}
+const tabs=me.role=="admin"?[["orders","অর্ডার"],["products","প্রোডাক্ট"],["riders","রাইডার"]]:me.role=="customer"?[["shop","দোকান"],["orders","আমার অর্ডার"]]:[];
+$("#top").innerHTML=`<div class="row"><b>⚡ ${esc(STORE)}</b><span class="mu">${esc(me.name)} <button class="b l" onclick="auth.signOut()">বের হন</button></span></div>`+(tabs.length?`<div class="tabs">${tabs.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="tab='${t[0]}';render(true)">${t[1]}</button>`).join("")}</div>`:"");
+const keep={};a.querySelectorAll("input[id]").forEach(e=>{if(e.type!="password")keep[e.id]=e.value});
+a.innerHTML=me.role=="admin"?adminV():me.role=="rider"?riderV():(tab=="shop"?shopV():myOrdersV());
+Object.keys(keep).forEach(k=>{const e=document.getElementById(k);if(e&&keep[k]!=="")e.value=keep[k]})}
+</script>
+</body>
+</html>
