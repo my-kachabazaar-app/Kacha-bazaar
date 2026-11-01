@@ -68,11 +68,24 @@ body{position:relative}
 .oc{background:linear-gradient(rgba(255,255,255,.84),rgba(255,255,255,.84)),url(store-bg.jpg) center/cover}
 @media (prefers-color-scheme:dark){.oc{background:linear-gradient(rgba(32,29,43,.9),rgba(32,29,43,.9)),url(store-bg.jpg) center/cover}}
 .th{display:flex;gap:8px}.th>div{width:58px;height:58px;background:#fff;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}.th img{width:100%;height:100%;object-fit:cover}.th .em{font-size:28px}
+.tabs{flex-wrap:wrap}
+.rh{background:linear-gradient(135deg,#12703f,#2fb36d);color:#fff;border-radius:0 0 22px 22px;padding:16px 14px;margin:0 -14px 12px;font-size:18px}.rh .va,.rh .hz2{color:#fff}.sws{font-size:12px}
+.sw{position:relative;width:52px;height:28px;display:inline-block}.sw input{display:none}.sw i{position:absolute;inset:0;background:#c8c8d0;border-radius:99px;transition:.2s}.sw i:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}.sw input:checked+i{background:#3ccf86}.sw input:checked+i:before{transform:translateX(24px)}
+.radar{position:relative;width:150px;height:150px;margin:16px auto}.radar span{position:absolute;inset:0;border-radius:50%;border:3px solid #2fb36d;animation:pl 2.4s infinite;opacity:0}.radar span:nth-child(2){animation-delay:.8s}.radar span:nth-child(3){animation-delay:1.6s}.radar b{position:absolute;inset:42px;border-radius:50%;background:#12703f;color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px}
+@keyframes pl{0%{transform:scale(.35);opacity:.9}100%{transform:scale(1.15);opacity:0}}
+.srchbox{text-align:center}.srch{font-weight:800;letter-spacing:2px;color:var(--pr)}.dots i{font-style:normal;animation:bl 1.2s infinite}.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}@keyframes bl{0%,100%{opacity:.2}50%{opacity:1}}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.st{border-radius:16px;padding:12px 6px;text-align:center;color:#1d1b26}.st b{font-size:17px}
+.cashc{background:linear-gradient(135deg,#ffe3b3,#ffc78a);color:#1d1b26}
+.phd{background:linear-gradient(135deg,#12703f,#2fb36d);color:#fff;border-radius:0 0 24px 24px;padding:14px;margin:0 -14px 14px}.pav{width:92px;height:92px;border-radius:50%;background:#fff;color:#12703f;display:flex;align-items:center;justify-content:center;font-size:40px;overflow:hidden;border:3px solid #fff;flex:none}.pav img{width:100%;height:100%;object-fit:cover}
+.seg{display:flex;gap:6px;margin:8px 0}.seg button{flex:1;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit}.seg button.on{background:var(--pr);color:#fff}
+.wk{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:6px 10px;margin:8px 0}.wk button{border:0;background:none;font-size:26px;color:var(--pr)}
+#pop .pb2{position:fixed;inset:0;background:#0007;z-index:50;display:flex;align-items:flex-end}#pop .pc2{background:var(--bg);color:var(--tx);width:100%;max-height:82vh;overflow:auto;border-radius:20px 20px 0 0;padding:14px}
 </style>
 </head>
 <body>
 <div id="top"></div>
 <main id="app"></main>
+<nav id="nav"></nav>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -93,67 +106,13 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(
 if(firebaseConfig.apiKey.startsWith("YOUR")){document.getElementById("app").innerHTML='<div class="card"><b>Setup pending</b><p>Add your firebaseConfig in index.html.</p></div>';throw new Error("config missing")}
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();
-let me=null,unsubs=[],products=[],orders=[],riders=[],tab="rider",signing=false,showAuth=false,after="";
 function stop(){unsubs.forEach(u=>u());unsubs=[]}
 function ping(m){try{navigator.vibrate&&navigator.vibrate([200,100,200]);if(window.Notification&&Notification.permission==="granted")new Notification(m)}catch(e){}}
 function soft(){const e=document.activeElement;if(e&&/INPUT|SELECT/.test(e.tagName))return;render()}
 function listen(q,set,msg){let f=true;unsubs.push(q.onSnapshot(s=>{const a=[];s.forEach(d=>a.push(Object.assign({id:d.id},d.data())));if(!f&&msg&&s.docChanges().some(c=>c.type==="added"))ping(msg);set(a);f=false;soft()},e=>alert(e.message)))}
 
-let scr="id",ctx={},resetting=false;
-const pw=p=>"kb#"+p+"#bazaar";
-const isPin=p=>/^\d{4}$/.test(p);
-const normId=v=>{v=v.trim().toLowerCase();const d=v.replace(/\D/g,"");return v.includes("@")?v:(d.length>=10?d.slice(-10):"")};
-function route(u){if(!u){me=null;scr="id";ctx={};return render(true)}boot(u)}
-auth.onAuthStateChanged(u=>{if(signing||resetting)return;stop();me=null;route(u)});
-if(auth.isSignInWithEmailLink(location.href)){resetting=true;(async()=>{try{
-const em=localStorage.getItem("qd_reset")||prompt("Enter the email address the link was sent to");
-await auth.signInWithEmailLink(em.trim(),location.href);history.replaceState(null,"",location.pathname);scr="newpin";showAuth=true;render(true)
-}catch(e){resetting=false;alert(e.message);history.replaceState(null,"",location.pathname);route(auth.currentUser)}})()}
-async function boot(u){
-const d=await db.collection("users").doc(u.uid).get();
-if(!d.exists){alert("Profile not found");return auth.signOut()}
-if(d.data().role!="rider"){alert("This is the rider site. Please use a rider account.");return auth.signOut()}
-me=Object.assign({uid:u.uid},d.data());
-if(!me.approved)return render(true);
-listen(db.collection("orders").where("riderId","==",me.uid),a=>orders=a,"A new order was assigned to you!");
-if(window.Notification&&Notification.permission==="default")Notification.requestPermission();
-render(true)}
-async function recheck(){try{const d=await db.collection("users").doc(me.uid).get();if(d.data().approved)boot(auth.currentUser);else alert("Still waiting for admin approval.")}catch(e){alert(e.message)}}
-function authV(){
-const B=(t,f,c)=>`<button class="b w ${c||""}" onclick="${f}">${t}</button>`;
-const pin=(id,ph)=>`<input id="${id}" type="password" inputmode="numeric" maxlength="4" placeholder="${ph}">`;
-let h='<div class="card stack">';
-if(scr=="id")h+=`<h2>Login</h2><input id="ix" placeholder="Mobile number or email" value="${esc(ctx.id||"")}">`+B("Continue","next()");
-else if(scr=="pin")h+=`<h2>Enter your 4-digit password</h2><div class="mu">${esc(ctx.id)}</div>${pin("pn","••••")}`+B("Login","login()")+B("Forgot password?","forgot()","l")+B("Use another number/email","scr='id';render(true)","l");
-else if(scr=="new")h+=`<h2>Create account</h2><div class="mu">No account found. Fill in the details below to create one.</div><input id="nm" placeholder="Name"><input id="ph" type="tel" placeholder="Mobile number (10 digits)" value="${esc(ctx.ph||"")}"><input id="em" type="email" placeholder="Email" value="${esc(ctx.em||"")}">${pin("p1","New 4-digit password")}${pin("p2","Re-enter password")}`+B("Create account","signup()")+B("Back","scr='id';render(true)","l");
-else if(scr=="verify")h+=`<h2>Verify your email</h2><p>${esc(ctx.email)} — a verification link has been sent to this address (check Spam if you can't find it). Click the link, then come back and tap the button below.</p>`+B("I have verified","chk()")+B("Resend link","resend()","l")+B("Logout","auth.signOut()","l");
-else if(scr=="forgot")h+=`<h2>Change password</h2><p>${esc(ctx.email)} — a link has been sent to this address. Click it to set a new 4-digit password.</p>`+B("Back to login","scr='id';render(true)","l");
-else if(scr=="newpin")h+=`<h2>New 4-digit password</h2>${pin("p1","New password")}${pin("p2","Re-enter password")}`+B("Save","setPin()");
-return h+"</div>"}
-async function next(){const k=normId($("#ix").value);if(!k)return alert("Enter a valid mobile number or email");
-try{const d=await db.collection("lookup").doc(k).get();ctx.id=$("#ix").value.trim();
-if(d.exists){ctx.email=d.data().email;scr="pin"}else{scr="new";ctx.em=k.includes("@")?k:"";ctx.ph=k.includes("@")?"":k}
-render(true)}catch(e){alert(e.message)}}
-async function login(){const p=$("#pn").value;if(!isPin(p))return alert("Enter a 4-digit number");
-try{await auth.signInWithEmailAndPassword(ctx.email,pw(p))}catch(e){alert(e.code=="auth/too-many-requests"?"Too many attempts. Please try again later.":"Wrong password")}}
-async function signup(){
-const nm=$("#nm").value.trim(),ph=$("#ph").value.replace(/\D/g,"").slice(-10),em=$("#em").value.trim().toLowerCase(),p=$("#p1").value;
-if(!nm||ph.length!=10||!em.includes("@"))return alert("Enter your name, a 10-digit mobile number and email");
-if(!isPin(p)||p!=$("#p2").value)return alert("Enter the same 4 digits twice");
-try{signing=true;
-for(const k of [ph,em])if((await db.collection("lookup").doc(k).get()).exists)throw new Error("An account already exists for this mobile or email. Please log in.");
-const u=(await auth.createUserWithEmailAndPassword(em,pw(p))).user;
-await db.collection("users").doc(u.uid).set({name:nm,phone:ph,email:em,role:"rider",approved:false,available:false});
-await db.collection("lookup").doc(ph).set({email:em,uid:u.uid});
-await db.collection("lookup").doc(em).set({email:em,uid:u.uid});
-signing=false;route(u)
-}catch(e){signing=false;alert(e.message)}}
-async function chk(){try{const u=auth.currentUser;await u.reload();if(!u.emailVerified)return alert("Not verified yet. Click the link in your email.");await u.getIdToken(true);route(u)}catch(e){alert(e.message)}}
-function resend(){auth.currentUser.sendEmailVerification().then(()=>alert("Link sent again")).catch(e=>alert(e.message))}
-async function forgot(){try{localStorage.setItem("qd_reset",ctx.email);await auth.sendSignInLinkToEmail(ctx.email,{url:location.origin+location.pathname,handleCodeInApp:true});scr="forgot";render(true)}catch(e){alert(e.message)}}
-async function setPin(){const p=$("#p1").value;if(!isPin(p)||p!=$("#p2").value)return alert("Enter the same 4 digits twice");
-try{const u=auth.currentUser;await u.updatePassword(pw(p));localStorage.removeItem("qd_reset");resetting=false;alert("New password has been set");await u.getIdToken(true);route(u)}catch(e){alert(e.message)}}
-
+const oid=o=>"KB"+o.id.slice(-4).toUpperCase();
+const dt=o=>o.createdAt&&o.createdAt.seconds?new Date(o.createdAt.seconds*1000).toLocaleString([],{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}):"";
 const img=p=>/^(https?:|data:)/.test(p.img||"")?`<img src="${esc(p.img)}" alt="">`:`<div class="em">${esc(p.img||"📦")}</div>`;
 const itemsT=o=>o.items.map(i=>esc(i.name)+" × "+i.q).join(", ");
 const badge=o=>`<span class="tag ${o.status=="delivered"?"s-delivered":""}">${o.status=="delivered"?"Completed ✓":ST[o.status]}</span>`;
@@ -161,24 +120,121 @@ const byTime=(a,b)=>((b.createdAt&&b.createdAt.seconds)||9e9)-((a.createdAt&&a.c
 const busy=r=>orders.some(o=>o.riderId==r.id&&ACTIVE.includes(o.status));
 const free=r=>r.available&&!busy(r);
 
-const LOGO='<span style="color:var(--pr)">Kacha</span> <span style="color:#e8801a">Bazaar</span>';
-function riderV(){
-let h=`<div class="card row"><b>On duty (Available)</b><input type="checkbox" style="width:auto;transform:scale(1.5)" ${me.available?"checked":""} onchange="duty(this.checked)"></div><h2>My deliveries</h2>`;
-const mine=orders.filter(o=>o.status!="delivered").sort(byTime);
-if(!mine.length)h+='<p class="mu">No orders assigned.</p>';
-mine.forEach(o=>{const nx={assigned:["accepted","Accept Order",""],accepted:["collected","Collected from store","g"],collected:["delivered","Delivered to customer","g"]}[o.status];
-h+=`<div class="card stack"><div class="row"><b>${esc(o.name)}</b>${badge(o)}</div><div class="mu">${itemsT(o)}<br>📍 ${esc(o.addr)}<br>📞 <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></div><div><b>${o.pay=="cod"?"Collect cash: ₹"+o.total:"Paid via UPI"}</b></div><button class="b w ${nx[2]}" onclick="setS('${o.id}','${nx[0]}')">${nx[1]}</button></div>`});
-return h}
-function duty(v){me.available=v;db.collection("users").doc(me.uid).update({available:v}).catch(e=>alert(e.message))}
-function setS(id,s){db.collection("orders").doc(id).update({status:s}).catch(e=>alert(e.message))}
-
+function pickImg(max,cb){const f=document.createElement("input");f.type="file";f.accept="image/*";f.onchange=()=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas"),x=c.getContext("2d");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.75))};im.src=r.result};r.readAsDataURL(f.files[0])};f.click()}
+let me=null,unsubs=[],orders=[],tickets=[],deps=[],cfg={},notes=[],kyc={},kimg={},tab="home",sub="",wk=0,bell=false,cb=0,tk="",editB=false,scr="id",ctx={},signing=false;
+const _ping=ping;ping=function(m){notes.unshift(m+" · "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));notes=notes.slice(0,8);_ping(m)};
+const dkey=t=>{const d=new Date(t);return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()};
+const ms=o=>o.deliveredAt&&o.deliveredAt.seconds?o.deliveredAt.seconds*1000:0;
+const dels=()=>orders.filter(o=>o.status=="delivered"&&ms(o));
+const hm=s=>Math.floor(s/3600)+"h "+String(Math.floor(s%3600/60)).padStart(2,"0")+"m";
+const rs=n=>"₹"+Math.round(n||0);
+const fd=t=>new Date(t).toLocaleDateString([],{day:"numeric",month:"short",year:"numeric"});
+const tm=m=>new Date(m).toLocaleString([],{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+const calcEarn=()=>(+cfg.pay||0)+(cfg.surgeOn?+cfg.surge||0:0)+(cfg.rainOn?+cfg.rain||0:0);
+const mixed=p=>p.length>=8&&/[A-Za-z]/.test(p)&&/\d/.test(p);
+const KY=[["aadhaar","Aadhaar card"],["pan","PAN card"],["dl","Driving licence (optional)"],["selfie","Selfie"]];
+const back='<button class="b l" onclick="sub=\'\';tk=\'\';editB=false;render(true)">← Back</button>';
+auth.onAuthStateChanged(u=>{if(signing)return;stop();me=null;if(u)boot(u);else{scr="id";ctx={};render(true)}});
+setInterval(()=>{if(me&&me.available&&scr=="main"&&tab=="home")soft()},30000);
+async function boot(u){try{
+const d=await db.collection("users").doc(u.uid).get();
+if(!d.exists){alert("Profile not found");return auth.signOut()}
+if(d.data().role!="rider"){alert("This is the rider site. Please use a rider account.");return auth.signOut()}
+me=Object.assign({uid:u.uid},d.data());
+if(!u.emailVerified){scr="ver";return render(true)}
+if(!me.approved){scr=me.kyc=="submitted"?"wait":"kyc";return render(true)}
+tab="home";sub="";
+unsubs.push(db.collection("settings").doc("rider").onSnapshot(x=>{cfg=x.exists?x.data():{};soft()},()=>{}));
+listen(db.collection("orders").where("riderId","==",me.uid),a=>orders=a,"A new order was assigned to you!");
+listen(db.collection("tickets").where("riderId","==",me.uid),a=>tickets=a);
+listen(db.collection("deposits").where("riderId","==",me.uid),a=>deps=a);
+db.collection("users").doc(me.uid).collection("kyc").doc("selfie").get().then(x=>{if(x.exists){me.selfie=x.data().img;soft()}}).catch(()=>{});
+if(window.Notification&&Notification.permission==="default")Notification.requestPermission();
+scr="main";render(true)}catch(e){alert(e.message)}}
+function authV(){const B=(t,f,c)=>`<button class="b w ${c||""}" onclick="${f}">${t}</button>`;let h='<div class="card stack">';
+if(scr=="id")h+=`<h2>Rider Login</h2><input id="ix" type="tel" maxlength="10" placeholder="Mobile number" value="${esc(ctx.ph||"")}">`+B("Continue","next()");
+else if(scr=="pw")h+=`<h2>Enter your password</h2><div class="mu">${esc(ctx.ph)}</div><input id="pw" type="password" placeholder="Password">`+B("Login","login()")+B("Forgot password?","forgot()","l")+B("Use another number","scr='id';render(true)","l");
+else h+=`<h2>Create rider account</h2><div class="mu">No account found for ${esc(ctx.ph)}. Fill in your details.</div><input id="nm" placeholder="Full name"><input id="em" type="email" placeholder="Email ID"><input id="rf" placeholder="Referral code (optional)"><input id="p1" type="password" placeholder="Password (letters + numbers, 8+)"><input id="p2" type="password" placeholder="Re-enter password">`+B("Register","reg()")+B("Back","scr='id';render(true)","l");
+return h+"</div>"}
+async function next(){const m=$("#ix").value.replace(/\D/g,"").slice(-10);if(m.length!=10)return alert("Enter a valid 10-digit mobile number");
+try{const d=await db.collection("lookup").doc(m).get();ctx.ph=m;if(d.exists){ctx.email=d.data().email;scr="pw"}else scr="reg";render(true)}catch(e){alert(e.message)}}
+async function login(){try{await auth.signInWithEmailAndPassword(ctx.email,$("#pw").value)}catch(e){alert("Wrong password, or too many attempts. Try again later.")}}
+function forgot(){auth.sendPasswordResetEmail(ctx.email).then(()=>alert("A password reset link has been sent to your email.")).catch(e=>alert(e.message))}
+async function reg(){const nm=$("#nm").value.trim(),em=$("#em").value.trim().toLowerCase(),p=$("#p1").value,rf=$("#rf").value.trim().toUpperCase();
+if(!nm||!em.includes("@"))return alert("Enter your name and a valid email");
+if(!mixed(p))return alert("Password must be 8+ characters with letters and numbers");
+if(p!=$("#p2").value)return alert("Passwords do not match");
+try{signing=true;
+if((await db.collection("lookup").doc(em).get()).exists)throw new Error("This email is already registered. Please log in.");
+const u=(await auth.createUserWithEmailAndPassword(em,p)).user;
+await db.collection("users").doc(u.uid).set({name:nm,phone:ctx.ph,email:em,role:"rider",approved:false,kyc:"none",available:false,ref:rf,createdAt:TS()});
+await db.collection("lookup").doc(ctx.ph).set({email:em,uid:u.uid});await db.collection("lookup").doc(em).set({email:em,uid:u.uid});
+await u.sendEmailVerification();signing=false;boot(u)}catch(e){signing=false;alert(e.message)}}
+function gateV(){const B=(t,f,c)=>`<button class="b w ${c||""}" onclick="${f}">${t}</button>`;
+if(scr=="ver")return `<div class="card stack"><h2>Verify your email</h2><p>A verification link has been sent to ${esc(me.email)} (check Spam too). Click it, then come back and tap the button below.</p>`+B("I have verified","chk()")+B("Resend link","resend()","l")+B("Logout","auth.signOut()","l")+"</div>";
+if(scr=="kyc")return `<div class="card stack"><h2>Verify your identity</h2><p class="mu">Upload your documents once. Our store manager will review them.</p>${KY.map(k=>`<button class="b l w" onclick="up('${k[0]}')">${kyc[k[0]]?"✅":"📷"} ${k[1]}</button>`).join("")}`+B("Verify","subKyc()")+B("Logout","auth.signOut()","l")+"</div>";
+return `<div class="card stack" style="text-align:center"><div style="font-size:48px">⏳</div><h2>Verification in progress</h2><p>Your documents have been submitted. Our store manager will approve your ID very soon.</p>`+B("Check again","recheck()")+B("Logout","auth.signOut()","l")+"</div>"}
+async function chk(){try{const u=auth.currentUser;await u.reload();if(!u.emailVerified)return alert("Not verified yet. Click the link in your email.");await u.getIdToken(true);boot(u)}catch(e){alert(e.message)}}
+function resend(){auth.currentUser.sendEmailVerification().then(()=>alert("Link sent again")).catch(e=>alert(e.message))}
+function up(t){pickImg(900,d=>{kyc[t]=d;render(true)})}
+async function subKyc(){if(!kyc.aadhaar||!kyc.pan||!kyc.selfie)return alert("Please upload Aadhaar, PAN and a selfie.");
+try{for(const k of Object.keys(kyc))await db.collection("users").doc(me.uid).collection("kyc").doc(k).set({img:kyc[k]});await db.collection("users").doc(me.uid).update({kyc:"submitted"});me.kyc="submitted";scr="wait";render(true)}catch(e){alert(e.message)}}
+async function recheck(){try{const d=await db.collection("users").doc(me.uid).get();if(d.data().approved)boot(auth.currentUser);else alert("Still waiting for approval.")}catch(e){alert(e.message)}}
+function todayStats(){const k=dkey(Date.now()),d=dels().filter(o=>dkey(ms(o))==k),secs=((me.days||{})["d"+k]||0)+(me.available&&me.onlineAt?Math.round((Date.now()-me.onlineAt)/1000):0);
+return{n:d.length,earn:d.reduce((s,o)=>s+(o.earn||0),0),cod:d.filter(o=>o.pay=="cod").reduce((s,o)=>s+o.total,0),secs}}
+function duty(v){const now=Date.now(),k=dkey(now),u={available:v};
+if(v)u.onlineAt=now;else if(me.onlineAt){const s=Math.round((now-me.onlineAt)/1000);u["days.d"+k]=firebase.firestore.FieldValue.increment(s);u.onlineAt=0;me.days=me.days||{};me.days["d"+k]=(me.days["d"+k]||0)+s}
+me.available=v;me.onlineAt=v?now:0;db.collection("users").doc(me.uid).update(u).catch(e=>alert(e.message));render(true)}
+function ordCard(o){const nx={assigned:["accepted","Accept Order",""],accepted:["collected","Collected from store","g"],collected:["delivered","Delivered to customer","g"]}[o.status];
+return `<div class="card stack"><div class="row"><b>Order #${oid(o)}</b>${badge(o)}</div><div class="mu">${itemsT(o)}<br>📍 ${esc(o.name)}, ${esc(o.addr)}<br>📞 <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></div><b>${o.pay=="cod"?"Collect cash: ₹"+o.total:"Paid via UPI"}</b><button class="b w ${nx[2]}" onclick="setS('${o.id}','${nx[0]}')">${nx[1]}</button></div>`}
+function setS(id,s){const u={status:s};if(s=="delivered"){u.deliveredAt=TS();u.earn=calcEarn()}db.collection("orders").doc(id).update(u).catch(e=>alert(e.message))}
+function homeV(){const t=todayStats(),act=orders.filter(o=>ACTIVE.includes(o.status)).sort(byTime);
+let h=`<div class="rh row"><b>🏬 ${esc(STORE)}</b><span class="row" style="gap:10px"><span class="sws">${me.available?"Online":"Offline"}</span><label class="sw"><input type="checkbox" ${me.available?"checked":""} onchange="duty(this.checked)"><i></i></label><button class="hz2" onclick="bell=!bell;render(true)">🔔${notes.length?`<sup>${notes.length}</sup>`:""}</button></span></div>`;
+if(bell)h+=`<div class="card stack"><b>Notifications</b>${notes.map(n=>`<div class="mu s2">${esc(n)}</div>`).join("")||'<div class="mu s2">No notifications yet.</div>'}</div>`;
+if(act.length)h+='<h2>Current order</h2>'+act.map(ordCard).join("");
+else if(me.available)h+=`<div class="srchbox"><div class="radar"><span></span><span></span><span></span><b>🛵</b></div><div class="srch">SEARCHING YOUR ORDER<span class="dots"><i>.</i><i>.</i><i>.</i></span></div></div>`;
+return h+`<h2>Today</h2><div class="g3"><div class="st" style="background:#d6e9fb"><div class="s2">Login Hrs</div><b>${hm(t.secs)}</b></div><div class="st" style="background:#d9f0d2"><div class="s2">Order done</div><b>${t.n}</b></div><div class="st" style="background:#fdeec4"><div class="s2">Total Earning</div><b>${rs(t.earn)}</b></div></div><h2>Cash Balance</h2><div class="card cashc"><div class="s2">Today's COD collected</div><b style="font-size:26px">${rs(t.cod)}</b></div>`}
+const wkStart=o=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7+o*7);return d};
+function earnV(){const mon=wkStart(wk),L=[];let tot=0,cnt=0;
+for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const k=dkey(d),m=dels().filter(o=>dkey(ms(o))==k),e=m.reduce((s,o)=>s+(o.earn||0),0);tot+=e;cnt+=m.length;L.push(`<div class="card row"><span><b>${d.toLocaleDateString([],{weekday:"long"})}</b><div class="mu s2">${d.toLocaleDateString([],{day:"numeric",month:"short"})} · ${m.length} orders</div></span><b>${rs(e)}</b></div>`)}
+const end=new Date(mon);end.setDate(mon.getDate()+6);const lab=wk==0?"THIS WEEK":wk==-1?"LAST WEEK":fd(mon)+" – "+fd(end);
+return `<div class="rh row"><b>Earning</b><button class="va" onclick="alert('Coming soon')">View surge ›</button></div><div class="row mu s2"><span>${esc(me.riderCode||"")}</span><span>${tm(Date.now())}</span></div><div class="wk row"><button onclick="wk--;render(true)">‹</button><b>${lab}</b><button ${wk>=0?"disabled":""} onclick="wk++;render(true)">›</button></div><div class="card cashc row"><span>Week total · ${cnt} orders</span><b style="font-size:22px">${rs(tot)}</b></div>`+L.join("")}
+const referV=()=>'<div class="rh row"><b>Refer &amp; Earn</b></div><div class="card" style="text-align:center;padding:40px 10px"><div style="font-size:54px">🎁</div><h2>Coming soon</h2><p class="mu">Refer your friends and earn rewards. This feature is coming soon.</p></div>';
+function profV(){
+if(sub=="rate")return rateV();if(sub=="hist")return histV();if(sub=="help")return helpV();if(sub=="cash")return cashV();if(sub=="doc")return docV();if(sub=="about")return aboutV();
+const j=me.createdAt&&me.createdAt.seconds?fd(me.createdAt.seconds*1000):"";
+const I=(ic,t,fn)=>`<div class="pi" onclick="${fn}"><span>${ic}</span><div>${t}</div><span class="mu">›</span></div>`;
+return `<div class="phd"><div class="s2" style="text-align:right">Joined: ${j}</div><div class="row" style="justify-content:flex-start;gap:14px"><div class="pav">${me.selfie?`<img src="${me.selfie}" alt="">`:esc((me.name||"?")[0])}</div><div><b style="font-size:20px">${esc(me.name)}</b><div class="s2">${esc(me.riderCode||"")}</div></div></div></div><div class="card pl">${I("🏬","Your store","openStore()")}${I("🧾","Rate Card","sub='rate';render(true)")}${I("📦","Order History","sub='hist';render(true)")}${I("💬","Help &amp; support","sub='help';render(true)")}${I("💵","Cash Balance","sub='cash';render(true)")}${I("📁","Document","openDoc()")}${I("ℹ️","About","sub='about';render(true)")}</div><button class="b l w" onclick="auth.signOut()">Logout</button>`}
+function openStore(){if(cfg.mapUrl)window.open(cfg.mapUrl,"_blank");else alert("Store location is not set yet.")}
+function rateV(){const R=(a,b)=>`<div class="card row"><span>${a}</span><b>${b}</b></div>`;
+return back+'<h2>Rate Card</h2>'+R("Pay per order",rs(cfg.pay))+R("Surge",cfg.surgeOn?"+"+rs(cfg.surge)+" / order":"Not active")+R("Rain surge",cfg.rainOn?"+"+rs(cfg.rain)+" / order":"Not active")+(cfg.note?`<div class="card mu">${esc(cfg.note)}</div>`:"")}
+function histV(){const lim=Date.now()-30*864e5,m={};dels().filter(o=>ms(o)>=lim).forEach(o=>{const k=dkey(ms(o));(m[k]=m[k]||[]).push(o)});const ks=Object.keys(m).sort().reverse();
+return back+'<h2>Order History (last 30 days)</h2>'+(ks.map(k=>`<div class="card row" onclick="dayPop(${k})"><b>${fd(ms(m[k][0]))}</b><span>${m[k].length} orders · ${rs(m[k].reduce((s,o)=>s+(o.earn||0),0))} ›</span></div>`).join("")||'<p class="mu">No deliveries in the last 30 days.</p>')}
+function dayPop(k){const L=dels().filter(o=>dkey(ms(o))==k);pop(`<h2>${fd(ms(L[0]))}</h2><div class="mu">${L.length} orders delivered</div>`+L.map(o=>`<div class="card stack"><b>Order #${oid(o)}</b><div class="mu s2">${itemsT(o)}</div><div class="row"><span>${o.pay.toUpperCase()} · ₹${o.total}</span><b>${rs(o.earn)}</b></div></div>`).join(""))}
+function pop(h){let p=document.getElementById("pop");if(!p){p=document.createElement("div");p.id="pop";document.body.appendChild(p)}p.innerHTML=`<div class="pb2" onclick="if(event.target==this)this.parentNode.style.display='none'"><div class="pc2">${h}<button class="b w" onclick="document.getElementById('pop').style.display='none'">Close</button></div></div>`;p.style.display="block"}
+function cashV(){const cod=dels().filter(o=>o.pay=="cod").sort((a,b)=>ms(b)-ms(a)),tot=cod.reduce((s,o)=>s+o.total,0),dep=deps.reduce((s,d)=>s+(+d.amount||0),0),bal=Math.max(0,tot-dep);let rem=bal;const rows=[];cod.forEach(o=>{if(rem>0){rows.push(o);rem-=o.total}});
+return back+`<div class="seg"><button class="${cb?"":"on"}" onclick="cb=0;render(true)">Cash Balance</button><button class="${cb?"on":""}" onclick="cb=1;render(true)">Past Deposit</button></div>`+(cb?(deps.slice().sort((a,b)=>(b.at||0)-(a.at||0)).map(d=>`<div class="card row"><span>${fd(d.at)}</span><b>${rs(d.amount)}</b></div>`).join("")||'<p class="mu">No deposits yet.</p>'):`<div class="card cashc"><div class="s2">Total cash with you</div><b style="font-size:30px">${rs(bal)}</b></div>`+rows.map(o=>`<div class="card row"><span>Order #${oid(o)}<div class="mu s2">${fd(ms(o))}</div></span><b>${rs(o.total)}</b></div>`).join(""))}
+function openDoc(){sub="doc";render(true);db.collection("users").doc(me.uid).collection("kyc").get().then(s=>{kimg={};s.forEach(d=>kimg[d.id]=d.data().img);soft()}).catch(e=>alert(e.message))}
+function docV(){const b=me.bank;
+return back+'<h2>Documents</h2>'+KY.map(k=>`<div class="card"><b>${k[1]}</b>${kimg[k[0]]?`<img src="${kimg[k[0]]}" style="width:100%;height:auto;border-radius:8px;margin-top:6px">`:'<div class="mu s2">Not uploaded</div>'}</div>`).join("")+'<h2>Bank details</h2>'+(b&&!editB?`<div class="card stack"><div>${esc(b.name)}</div><div class="mu">A/C ${esc(b.acc)}<br>${esc(b.bank)} · ${esc(b.ifsc)}</div><button class="b l w" onclick="editB=true;render(true)">Change bank details</button></div>`:`<div class="card stack"><input id="bn" placeholder="Account holder name" value="${esc(b?b.name:"")}"><input id="ba" placeholder="Account number" value="${esc(b?b.acc:"")}"><input id="bk" placeholder="Bank name" value="${esc(b?b.bank:"")}"><input id="bi" placeholder="IFSC code" value="${esc(b?b.ifsc:"")}"><button class="b w" onclick="saveBank()">Submit</button></div>`)}
+async function saveBank(){const b={name:$("#bn").value.trim(),acc:$("#ba").value.trim(),bank:$("#bk").value.trim(),ifsc:$("#bi").value.trim().toUpperCase()};if(!b.name||!b.acc||!b.bank||!b.ifsc)return alert("Fill in all bank details");
+try{await db.collection("users").doc(me.uid).update({bank:b});me.bank=b;editB=false;render(true)}catch(e){alert(e.message)}}
+const aboutV=()=>back+`<h2>About</h2><div class="card pl"><div class="pi" onclick="openPdf('terms')"><span>📄</span><div>Terms &amp; Conditions</div><span class="mu">›</span></div><div class="pi" onclick="openPdf('privacy')"><span>🔒</span><div>Privacy Policy</div><span class="mu">›</span></div></div>`;
+async function openPdf(k){try{const d=await db.collection("files").doc(k).get();if(!d.exists)return alert("Not uploaded yet.");const b=atob(d.data().data.split(",")[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);window.open(URL.createObjectURL(new Blob([a],{type:"application/pdf"})),"_blank")}catch(e){alert(e.message)}}
+const tg2=t=>`<span class="tag ${t.status=="closed"?"":"s-delivered"}">${t.status=="closed"?"Closed":"Active"}</span>`;
+function helpV(){const t=tickets.find(x=>x.id==tk);
+if(t)return back+`<h2>${esc(t.subject)}</h2>${tg2(t)}`+t.msgs.map(m=>`<div class="card"><div class="mu s2">${m.from=="admin"?"Store manager":"You"} · ${tm(m.at)}</div>${esc(m.text)}</div>`).join("")+`<input id="tr" placeholder="Write a reply"><button class="b w" onclick="rep('${t.id}')">Send reply</button>`;
+return back+`<h2>Help &amp; support</h2><div class="card stack"><b>Raise a ticket</b><input id="ts" placeholder="Describe your problem"><button class="b w" onclick="newTk()">Raise ticket</button></div><h2>My tickets</h2>`+(tickets.slice().sort(byTime).map(t=>`<div class="card row" onclick="tk='${t.id}';render(true)"><span>${esc(t.subject)}</span>${tg2(t)}</div>`).join("")||'<p class="mu">No tickets yet.</p>')+`<h2>Store manager</h2><div class="card row"><b>${esc(cfg.mgrName||"Store manager")}</b>${cfg.mgrPhone?`<a class="b" href="tel:${esc(cfg.mgrPhone)}">📞 ${esc(cfg.mgrPhone)}</a>`:'<span class="mu">Not set</span>'}</div>`}
+function newTk(){const s=$("#ts").value.trim();if(!s)return alert("Describe your problem");db.collection("tickets").add({riderId:me.uid,riderName:me.name,riderCode:me.riderCode||"",subject:s,status:"open",msgs:[{from:"rider",text:s,at:Date.now()}],createdAt:TS()}).then(()=>{$("#ts").value=""}).catch(e=>alert(e.message))}
+function rep(id){const x=$("#tr").value.trim();if(!x)return;db.collection("tickets").doc(id).update({msgs:firebase.firestore.FieldValue.arrayUnion({from:"rider",text:x,at:Date.now()}),status:"open"}).then(()=>{$("#tr").value=""}).catch(e=>alert(e.message))}
 function swap(a,html){const k={};a.querySelectorAll("input[id]").forEach(e=>{if(e.type!="password")k[e.id]=e.value});a.innerHTML=html;Object.keys(k).forEach(i=>{const e=document.getElementById(i);if(e&&k[i]!==""&&e.type!="checkbox")e.value=k[i]})}
-function render(force){
-const a=$("#app"),top=$("#top");
-if(!me){top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="tag">RIDER</span></div>`;return swap(a,authV())}
-top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="mu">${esc(me.name)} <button class="b l" onclick="auth.signOut()">Logout</button></span></div>`;
-if(!me.approved)return swap(a,'<div class="card stack"><b>Waiting for approval</b><p class="mu">The store owner has to approve your rider account. Please check again soon.</p><button class="b w" onclick="recheck()">Check again</button></div>');
-swap(a,riderV())}
+function render(force){const a=$("#app"),nav=$("#nav");$("#top").innerHTML="";
+if(!me){nav.style.display="none";return swap(a,authV())}
+if(scr!="main"){nav.style.display="none";return swap(a,gateV())}
+nav.style.display="";
+const N=[["home","🏠","Home"],["earn","💰","Earning"],["refer","🎁","Refer &amp; Earn"],["prof","👤","Profile"]];
+nav.innerHTML=N.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="tab='${t[0]}';sub='';tk='';bell=false;render(true);scrollTo(0,0)"><span>${t[1]}</span>${t[2]}</button>`).join("");
+swap(a,tab=="home"?homeV():tab=="earn"?earnV():tab=="refer"?referV():profV())}
 </script>
 </body>
 </html>
