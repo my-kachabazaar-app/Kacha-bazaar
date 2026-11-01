@@ -59,6 +59,15 @@ body{position:relative}
 .tl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin:10px 0}.tl div{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 4px;font-size:13px}
 .kc{background:#efe6fb;color:#1d1b26}
 .pl{padding:0 12px}.pi{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--bd)}.pi:last-child{border:0}.pi div{flex:1}.s2{font-size:12px}
+.pc{position:relative}.hz{position:absolute;top:6px;right:6px;border:0;background:#fffc;border-radius:50%;width:28px;height:28px;font-size:15px;padding:0}.hz2{border:0;background:none;font-size:22px;padding:0 2px}
+.ct img{width:100%;height:100%;object-fit:cover;border-radius:16px}.ct.s{width:44px;height:44px;aspect-ratio:auto;font-size:22px;flex:none}
+.kg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kcard{border-radius:16px;padding:8px;text-align:center;color:#1d1b26;font-weight:600;font-size:14px;aspect-ratio:1.5/1;display:flex;flex-direction:column;justify-content:flex-end}.kcard img{width:100%;height:62%;object-fit:cover;border-radius:12px}.kcard .em{font-size:46px}
+.dis{border-radius:14px;padding:18px;text-align:center;font-weight:800;background:linear-gradient(90deg,#d9f0d2,#f2fbe9,#d9f0d2);color:#1d1b26;margin-bottom:10px}
+.ci{display:flex;gap:10px;align-items:center}.ci img,.ci .em{width:64px;height:64px;flex:none;object-fit:cover;font-size:34px;line-height:64px}
+.bt{background:#e5f4e8;color:#12703f;border-radius:10px;padding:10px;font-size:17px}
+.oc{background:linear-gradient(rgba(255,255,255,.84),rgba(255,255,255,.84)),url(store-bg.jpg) center/cover}
+@media (prefers-color-scheme:dark){.oc{background:linear-gradient(rgba(32,29,43,.9),rgba(32,29,43,.9)),url(store-bg.jpg) center/cover}}
+.th{display:flex;gap:8px}.th>div{width:58px;height:58px;background:#fff;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}.th img{width:100%;height:100%;object-fit:cover}.th .em{font-size:28px}
 </style>
 </head>
 <body>
@@ -75,6 +84,8 @@ const firebaseConfig={apiKey:"AIzaSyCNPi7mLkWMz1kGo3b2YXstjM65wbB0ZLw",authDomai
 const STORE="Kacha Bazaar";
 const UPI_ID="yourname@upi";
 const SUPPORT_PHONE="";
+const SUPPORT_EMAIL="";
+const DELIVERY_FEE=30,TAX_PCT=5;
 /* ========================================= */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -84,7 +95,7 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(
 if(firebaseConfig.apiKey.startsWith("YOUR")){document.getElementById("app").innerHTML='<div class="card"><b>Setup pending</b><p>Add your firebaseConfig in index.html.</p></div>';throw new Error("config missing")}
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();
-let me=null,unsubs=[],cart={},products=[],orders=[],riders=[],tab="shop",pay="cod",signing=false;
+let me=null,unsubs=[],cart={},products=[],orders=[],riders=[],tab="shop",pay="cod",signing=false,q="",catSel="",showAuth=false,after="",catImg={},wish=[],trk={},hopen=-1,pPhoto="",gAddr="",lst="";
 
 function stop(){unsubs.forEach(u=>u());unsubs=[]}
 function ping(m){try{navigator.vibrate&&navigator.vibrate([200,100,200]);if(window.Notification&&Notification.permission==="granted")new Notification(m)}catch(e){}}
@@ -95,19 +106,18 @@ let scr="id",ctx={},resetting=false;
 const pw=p=>"kb#"+p+"#bazaar";
 const isPin=p=>/^\d{4}$/.test(p);
 const normId=v=>{v=v.trim().toLowerCase();const d=v.replace(/\D/g,"");return v.includes("@")?v:(d.length>=10?d.slice(-10):"")};
-function route(u){if(!u){me=null;scr="id";ctx={};showAuth=false;tab="home";return render(true)}
+function route(u){if(!u){try{wish=JSON.parse(localStorage.getItem("qd_wish")||"[]")}catch(e){wish=[]}me=null;scr="id";ctx={};showAuth=false;tab="home";return render(true)}
 boot(u)}
 auth.onAuthStateChanged(u=>{if(signing||resetting)return;stop();me=null;route(u)});
 if(auth.isSignInWithEmailLink(location.href)){resetting=true;(async()=>{try{
 const em=localStorage.getItem("qd_reset")||prompt("Enter the email address the link was sent to");
 await auth.signInWithEmailLink(em.trim(),location.href);history.replaceState(null,"",location.pathname);scr="newpin";showAuth=true;render(true)
 }catch(e){resetting=false;alert(e.message);history.replaceState(null,"",location.pathname);route(auth.currentUser)}})()}
-let q="",catSel="",showAuth=false,after="";
 db.collection("products").onSnapshot(s=>{products=s.docs.map(d=>Object.assign({id:d.id},d.data()));soft()},e=>console.log(e.message));
 async function boot(u){
 const d=await db.collection("users").doc(u.uid).get();
 if(!d.exists){alert("Profile not found");return auth.signOut()}
-me=Object.assign({uid:u.uid},d.data());showAuth=false;tab=me.role=="admin"?"orders":me.role=="rider"?"rider":(after||"home");after="";
+me=Object.assign({uid:u.uid},d.data());wish=me.wish||[];showAuth=false;tab=me.role=="admin"?"orders":me.role=="rider"?"rider":(after||"home");after="";
 const O=db.collection("orders");
 if(me.role=="customer")listen(O.where("uid","==",me.uid),a=>orders=a);
 if(me.role=="admin"){listen(O,a=>orders=a,"New order received!");listen(db.collection("users").where("role","==","rider"),a=>riders=a)}
@@ -150,38 +160,41 @@ async function forgot(){try{localStorage.setItem("qd_reset",ctx.email);await aut
 async function setPin(){const p=$("#p1").value;if(!isPin(p)||p!=$("#p2").value)return alert("Enter the same 4 digits twice");
 try{const u=auth.currentUser;await u.updatePassword(pw(p));localStorage.removeItem("qd_reset");resetting=false;alert("New password has been set");await u.getIdToken(true);route(u)}catch(e){alert(e.message)}}
 
-const img=p=>/^https?:/.test(p.img||"")?`<img src="${esc(p.img)}" alt="">`:`<div class="em">${esc(p.img||"📦")}</div>`;
+const img=p=>/^(https?:|data:)/.test(p.img||"")?`<img src="${esc(p.img)}" alt="">`:`<div class="em">${esc(p.img||"📦")}</div>`;
 const itemsT=o=>o.items.map(i=>esc(i.name)+" × "+i.q).join(", ");
 const badge=o=>`<span class="tag ${o.status=="delivered"?"s-delivered":""}">${o.status=="delivered"?"Completed ✓":ST[o.status]}</span>`;
 const byTime=(a,b)=>((b.createdAt&&b.createdAt.seconds)||9e9)-((a.createdAt&&a.createdAt.seconds)||9e9);
 const busy=r=>orders.some(o=>o.riderId==r.id&&ACTIVE.includes(o.status));
 const free=r=>r.available&&!busy(r);
 
-const CATS=[["Vegetables","🥦","#d9f0d2"],["Fruits","🍎","#fdeec4"],["Dairy","🥛","#d6e9fb"],["Meat","🍗","#fbd9dd"],["Snacks","🍪","#fde3b8"],["Beverages","🥤","#fcd5bd"],["Staples","🌾","#efe3d2"],["Personal Care","🧴","#cfeff0"]];
-const BAN=[["Fresh Vegetables","Farm fresh, delivered fast","🥬","Vegetables","#d9f0d2"],["Daily Essentials","Milk, eggs, bread & more","🥛","Dairy","#d6e9fb"],["Weekend Specials","Stock up on snacks","🧺","Snacks","#fdeec4"]];
+const CATS=[["Vegetables & Fruits","🥦","#f7c6cc"],["Fresh Meat & Seafood","🍗","#f7c6cc"],["Dairy & Eggs","🥛","#bfdcf7"],["Bakery & Biscuits","🍞","#f6dcc2"],["Snacks & Munchies","🍪","#fde3a7"],["Cold Drinks & Juices","🥤","#cdebc3"],["Atta, Rice & Dals","🌾","#eadfcd"],["Masalas & Oils","🌶️","#f6d3b3"],["Personal Care","🧴","#c4ecee"],["Household Essentials","🧽","#c5e1f7"]];
+try{wish=JSON.parse(localStorage.getItem("qd_wish")||"[]")}catch(e){}
+db.collection("categories").onSnapshot(x=>{catImg={};x.forEach(d=>catImg[d.id]=d.data().img);soft()},e=>console.log(e.message));
+const BAN=[["Fresh Vegetables","Farm fresh, delivered fast","🥬","Vegetables & Fruits","#d9f0d2"],["Daily Essentials","Milk, eggs, bread & more","🥛","Dairy & Eggs","#d6e9fb"],["Weekend Specials","Stock up on snacks","🧺","Snacks & Munchies","#fdeec4"]];
 const LOGO='<span style="color:var(--pr)">Kacha</span> <span style="color:#e8801a">Bazaar</span>';
 const cnt=()=>Object.values(cart).reduce((s,x)=>s+x,0);
 const live=()=>products.filter(p=>p.stock>0);
 const loginTo=t=>`after='${t}';showAuth=true;scr='id';render(true)`;
 function card(p){const c=cart[p.id]||0;
-return `<div class="pc">${img(p)}<div class="pn">${esc(p.name)}</div><div class="row"><span><b>₹${p.price}</b>${p.mrp>p.price?` <s class="mu">₹${p.mrp}</s>`:""}</span>${c?`<span class="qty"><button onclick="dec('${p.id}')">−</button>${c}<button onclick="add('${p.id}')">+</button></span>`:`<button class="add" onclick="add('${p.id}')">+ADD</button>`}</div></div>`}
-const catGrid=()=>`<div class="cg">${CATS.map(c=>`<div onclick="pick('${c[0]}')"><div class="ct" style="background:${c[2]}">${c[1]}</div><div class="cl">${c[0]}</div></div>`).join("")}</div>`;
-function pick(c){catSel=c;q="";tab="cat";render(true);scrollTo(0,0)}
+return `<div class="pc"><button class="hz" onclick="toggleW('${p.id}')">${wish.includes(p.id)?"❤️":"🤍"}</button>${img(p)}<div class="pn">${esc(p.name)}</div><div class="row"><span><b>₹${p.price}</b>${p.mrp>p.price?` <s class="mu">₹${p.mrp}</s>`:""}</span>${c?`<span class="qty"><button onclick="dec('${p.id}')">−</button>${c}<button onclick="add('${p.id}')">+</button></span>`:`<button class="add" onclick="add('${p.id}')">+ADD</button>`}</div></div>`}
+const catPic=i=>catImg["c"+i]?`<img src="${catImg["c"+i]}" alt="">`:CATS[i][1];
+const catGrid=()=>`<div class="cg">${CATS.map((c,i)=>`<div onclick="pickI(${i})"><div class="ct" style="background:${c[2]}">${catPic(i)}</div><div class="cl">${esc(c[0])}</div></div>`).join("")}</div>`;
+function pickI(i){pick(CATS[i][0])}
+function pick(c){lst="cat:"+c;tab="list";q="";render(true);scrollTo(0,0)}
 const SECS=[["fresh","Fresh Today"],["featured","Featured Products"],["best","Best Sellers"],["seasonal","Seasonal Specials"]];
 const inSec=(p,k)=>(p.sec||[]).includes(k)||(k=="featured"&&p.featured);
-let lst="";
 function openList(k){lst=k;tab="list";render(true);scrollTo(0,0)}
 const secHd=(t,k)=>`<div class="row"><h2>${t}</h2><button class="va" onclick="openList('${k}')">View all ›</button></div>`;
-function listV(){const s=SECS.find(x=>x[0]==lst),r=lst=="all"?live():live().filter(p=>inSec(p,lst));
-return `<button class="b l" onclick="tab='home';render(true)">← Back</button><h2>${s?s[1]:"All Products"}</h2>`+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No products here yet.</p>')}
-const hdr=()=>`<div class="row hd"><button class="pb" onclick="${me?"tab='prof';render(true)":loginTo("prof")}"><img src="logo.png" alt="Profile"></button><b class="logo">${LOGO}</b>${me?`<span class="mu">Hi, ${esc(me.name.split(" ")[0])}</span>`:`<button class="b l" onclick="${loginTo("")}">Login/Register</button>`}</div>`;
+function listV(){const s=SECS.find(x=>x[0]==lst),k=lst.startsWith("cat:"),r=lst=="all"?live():k?live().filter(p=>p.cat==lst.slice(4)):live().filter(p=>inSec(p,lst));
+return `<button class="b l" onclick="tab='home';render(true)">← Back</button><h2>${esc(k?lst.slice(4):s?s[1]:"All Products")}</h2>`+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No products here yet.</p>')}
+const hdr=()=>`<div class="row hd"><button class="pb" onclick="${me?"tab='prof';render(true)":loginTo("prof")}"><img src="logo.png" alt="Profile"></button><b class="logo">${LOGO}</b><button class="hz2" onclick="tab='wish';render(true)">❤️</button>${me?`<span class="mu">Hi, ${esc(me.name.split(" ")[0])}</span>`:`<button class="b l" onclick="${loginTo("")}">Login/Register</button>`}</div>`;
 const soon=()=>alert("Coming soon");
 async function editP(){const n=prompt("Your name",me.name);if(n===null||!n.trim())return;me.name=n.trim();try{await db.collection("users").doc(me.uid).update({name:me.name})}catch(e){alert(e.message)}render(true)}
 async function editA(){const n=prompt("Delivery address",me.addr||"");if(n===null)return;me.addr=n.trim();try{await db.collection("users").doc(me.uid).update({addr:me.addr})}catch(e){alert(e.message)}render(true)}
 function profV(){
 const I=(ic,t,sub,fn)=>`<div class="pi" onclick="${fn}"><span>${ic}</span><div><div>${t}</div>${sub?`<div class="mu s2">${sub}</div>`:""}</div><span class="mu">›</span></div>`;
 return `<div class="av"><div class="avc">${esc((me.name||"?")[0].toUpperCase())}</div><a href="#" onclick="editP();return false">Edit Profile</a><div class="mu s2">${esc(me.phone)} · ${esc(me.email||"")}</div></div>
-<div class="tl"><div onclick="tab='orders';render(true)">🛍<br>Your Orders</div><div onclick="soon()">💳<br>Kacha Cash</div><div onclick="soon()">♡<br>Your Wishlist</div></div>
+<div class="tl"><div onclick="tab='orders';render(true)">🛍<br>Your Orders</div><div onclick="soon()">💳<br>Kacha Cash</div><div onclick="tab='wish';render(true)">♡<br>Your Wishlist</div></div>
 <div class="card kc stack" onclick="soon()"><div class="row"><b>👛 Kacha Cash &amp; Gift Card</b><span>›</span></div><div class="row"><span>Available Balance ₹0</span><button class="b l">Add Balance</button></div></div>
 <h2>Profile Information</h2><div class="card pl">${I("⭐","Rewards &amp; Earn","","soon()")}${I("📍","Saved Addresses",me.addr?"1 Address":"None","editA()")}${I("💳","Payments","","soon()")}${I("👤","Profile Details",esc(me.name),"editP()")}</div>
 <h2>More Options</h2><div class="card pl">${I("💬","Help &amp; Support","","tab='help';render(true)")}${I("☆","Suggest Products","","soon()")}${I("ℹ️","General Info","","alert('${STORE} - fresh groceries delivered fast.')")}</div>
@@ -194,20 +207,38 @@ SECS.forEach(s=>{const r=L.filter(p=>inSec(p,s[0]));if(r.length)h+=secHd(s[1],s[
 return h+(L.length?secHd("All Products","all")+`<div class="grid">${L.map(card).join("")}</div>`:'<p class="mu">No products yet.</p>')}
 function srch(v){q=v;$("#res").innerHTML=resV()}
 const homeV=()=>`<input class="srch" placeholder="Search for fresh products, veggies, or groceries..." value="${esc(q)}" oninput="srch(this.value)"><div id="res">${resV()}</div>`;
-function catV(){let h="<h2>Categories</h2>"+catGrid();
-if(catSel){const r=live().filter(p=>p.cat==catSel);h+=`<div class="row"><h2>${esc(catSel)}</h2><button class="b l" onclick="catSel='';render(true)">Clear</button></div>`+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No products in this category yet.</p>')}
-return h}
+const catCard=(c,i)=>`<div class="kcard" style="background:${c[2]}" onclick="pickI(${i})">${catImg["c"+i]?`<img src="${catImg["c"+i]}" alt="">`:`<div class="em">${c[1]}</div>`}<div>${esc(c[0])}</div></div>`;
+function catV(){return `<div class="row"><h2>All Categories</h2><button class="va" onclick="tab='home';render(true);setTimeout(()=>{const e=$('.srch');e&&e.focus()},50)">🔍</button></div><div class="dis">DISCOVER OUR FULL RANGE</div><div class="kg">${CATS.map(catCard).join("")}</div>`}
+const tots=()=>{const sub=Object.keys(cart).reduce((n,id)=>{const p=products.find(x=>x.id==id);return n+(p?p.price*cart[id]:0)},0),fee=sub?DELIVERY_FEE:0,tax=Math.round(sub*TAX_PCT/100);return{sub,fee,tax,tot:sub+fee+tax}};
+const addrNow=()=>(me&&me.addr)||gAddr;
+function needLogin(t){after=t;showAuth=true;scr="id";render(true)}
+async function chAddr(){const n=prompt("Delivery address",addrNow());if(n===null)return;gAddr=n.trim();if(me){me.addr=gAddr;try{await db.collection("users").doc(me.uid).update({addr:gAddr})}catch(e){alert(e.message)}}render(true)}
+function rmI(id){delete cart[id];render(true)}
+function goCheckout(){if(!me)return needLogin("checkout");tab="checkout";render(true);scrollTo(0,0)}
 function cartV(){
-const ids=Object.keys(cart).filter(id=>products.some(p=>p.id==id));if(!ids.length)return '<h2>Cart</h2><p class="mu">Your cart is empty.</p>';
-let tot=0,h='<h2>Cart</h2><div class="card stack">';
-ids.forEach(id=>{const p=products.find(x=>x.id==id);tot+=p.price*cart[id];h+=`<div class="row"><span>${esc(p.name)} × ${cart[id]}</span><span>₹${p.price*cart[id]} <button class="b l" onclick="dec('${id}')">−</button></span></div>`});
-h+=`<div class="row"><b>Total</b><b>₹${tot}</b></div>`;
-if(!me)return h+`<button class="b w" onclick="${loginTo("cart")}">Login to place order</button></div>`;
-h+=`<input id="cn" placeholder="Name" value="${esc(me.name)}"><input id="cp" type="tel" placeholder="Phone" value="${esc(me.phone)}"><input id="ca" placeholder="Delivery address" value="${esc(me.addr||"")}"><select onchange="pay=this.value;render(true)"><option value="cod">Cash on Delivery</option><option value="upi" ${pay=="upi"?"selected":""}>UPI</option></select>`;
-if(pay=="upi")h+=`<div class="mu">UPI ID: <b>${esc(UPI_ID)}</b></div><a class="b" href="upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(STORE)}&am=${tot}&cu=INR">Pay ₹${tot} in UPI app</a><input id="cu" placeholder="UTR / transaction number after payment">`;
+const ids=Object.keys(cart).filter(id=>products.some(p=>p.id==id));
+if(!ids.length)return '<h2>🛒 Your Cart</h2><p class="mu">Your cart is empty.</p>';
+const t=tots(),ad=addrNow();
+let h=`<div class="card row">📍 <span style="flex:1">Delivering to: ${ad?esc(ad):"add your address"}</span><a href="#" onclick="chAddr();return false">(Change)</a></div><div class="row"><h2>🛒 Your Cart</h2><span class="tag">${cnt()} Items</span></div>`;
+ids.forEach(id=>{const p=products.find(x=>x.id==id);h+=`<div class="card ci">${img(p)}<div style="flex:1"><b>${esc(p.name)}</b><div class="mu s2">${esc(p.cat||"")}</div><b style="color:var(--pr)">₹${p.price}</b></div><span class="qty"><button onclick="dec('${id}')">−</button>${cart[id]}<button onclick="add('${id}')">+</button></span><button class="va" onclick="rmI('${id}')">🗑</button></div>`});
+h+=`<div class="card row"><div><b>📍 Delivery Address</b><div class="mu">${ad?esc(ad):"No address yet"}</div></div><button class="b l" onclick="chAddr()">✏️ Change</button></div>
+<div class="card stack"><b>🧾 Bill Details</b><div class="row"><span>Item Total</span><span>₹${t.sub}</span></div><div class="row"><span>Delivery Fee</span><span>₹${t.fee}</span></div><div class="row"><span>Taxes &amp; Charges (GST)</span><span>₹${t.tax}</span></div><div class="row bt"><b>Final Total Amount</b><b>₹${t.tot}</b></div></div>`;
+const more=live().filter(p=>!cart[p.id]).slice(0,8);
+if(more.length)h+=secHd("Add More Products","all")+`<div class="hs">${more.map(card).join("")}</div>`;
+return h+`<button class="b w" onclick="goCheckout()">Proceed to Checkout ›</button>`}
+function checkoutV(){const t=tots();if(!t.sub)return cartV();
+let h=`<button class="b l" onclick="tab='cart';render(true)">← Back to cart</button><h2>Checkout</h2><div class="card stack"><div class="row"><b>Amount to pay</b><b>₹${t.tot}</b></div><input id="cn" placeholder="Name" value="${esc(me.name)}"><input id="cp" type="tel" placeholder="Phone" value="${esc(me.phone)}"><input id="ca" placeholder="Delivery address" value="${esc(addrNow())}"><select onchange="pay=this.value;render(true)"><option value="cod">Cash on Delivery</option><option value="upi" ${pay=="upi"?"selected":""}>UPI</option></select>`;
+if(pay=="upi")h+=`<div class="mu">UPI ID: <b>${esc(UPI_ID)}</b></div><a class="b" href="upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(STORE)}&am=${t.tot}&cu=INR">Pay ₹${t.tot} in UPI app</a><input id="cu" placeholder="UTR / transaction number after payment">`;
 return h+'<button class="b w" onclick="place()">Place order</button></div>'}
+const wishV=()=>{const r=live().filter(p=>wish.includes(p.id));return `<h2>❤️ My Wishlist</h2>`+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No wishlisted products yet. Tap the heart on any product.</p>')};
+function toggleW(id){wish=wish.includes(id)?wish.filter(x=>x!=id):wish.concat(id);if(me)db.collection("users").doc(me.uid).update({wish}).catch(e=>alert(e.message));else try{localStorage.setItem("qd_wish",JSON.stringify(wish))}catch(e){}render(true)}
 const loginP=t=>`<h2>Orders</h2><div class="card stack"><p>Please log in to ${t}.</p><button class="b w" onclick="${loginTo("orders")}">Login/Register</button></div>`;
-const helpV=()=>`<h2>Help</h2><div class="card stack"><b>Need help with an order?</b><p class="mu">Contact the store${SUPPORT_PHONE?` on <a href="tel:${esc(SUPPORT_PHONE)}">${esc(SUPPORT_PHONE)}</a>`:""}.</p></div>`;
+const FAQ=[["Frequently Asked Questions (FAQs)","❓","Add products to the cart, choose Cash on Delivery or UPI and place your order. A rider collects it from the store and delivers it to you."],["Returns &amp; Refunds","↩️","If something is wrong with your order, contact support with your order number."],["Delivery Status &amp; Fees","🚚","Open the Order tab and tap Track Order to see the status. Delivery fee and GST are shown in your cart bill."],["Offers &amp; Payments","💳","We accept Cash on Delivery and UPI. For UPI, pay first and enter the transaction number at checkout."],["Account &amp; Login","👤","Log in with your mobile number or email and your 4-digit password. Use Forgot password? to set a new one."],["Feedback &amp; Suggestions","💬","Tell us what to improve or which products to add through support."]];
+function helpV(){const o=orders.slice().sort(byTime)[0],ph=SUPPORT_PHONE.replace(/\D/g,"");
+const C=(ic,t,sub,href,tg)=>`<a class="pi" ${href?`href="${href}"`:""} style="text-decoration:none;color:inherit"><span>${ic}</span><div>${t}<div class="mu s2">${sub}</div></div>${tg?`<span class="tag s-delivered">${tg}</span>`:""}</a>`;
+let h='<h2>Help &amp; Support</h2>';
+if(me&&o)h+=`<h2>Recent Order Help</h2><div class="card oc stack"><div class="row"><b>Order #${oid(o)}</b><span class="mu">${o.status=="delivered"?"Delivered":"In Progress"}</span></div>${thumbs(o)}<button class="b w" onclick="scrollTo(0,document.body.scrollHeight)">Get Help with this Order</button></div>`;
+return h+'<h2>Help Topics</h2><div class="card pl">'+FAQ.map((f,i)=>`<div class="pi" onclick="hopen=hopen==${i}?-1:${i};render(true)"><span>${f[1]}</span><div>${f[0]}${hopen==i?`<div class="mu s2">${f[2]}</div>`:""}</div><span class="mu">›</span></div>`).join("")+'</div><h2>Contact Us</h2><div class="card pl">'+C("💬","Live Chat",ph?"WhatsApp chat":"Not set up yet",ph?`https://wa.me/${ph}`:"",ph?"Online":"")+C("✉️","Email Support",esc(SUPPORT_EMAIL)||"Not set up yet",SUPPORT_EMAIL?`mailto:${esc(SUPPORT_EMAIL)}`:"")+C("📞","Call Support",esc(SUPPORT_PHONE)||"Not set up yet",SUPPORT_PHONE?`tel:${esc(SUPPORT_PHONE)}`:"")+'</div>'}
 function add(id){const p=products.find(x=>x.id==id);if((cart[id]||0)>=p.stock)return alert("Out of stock");cart[id]=(cart[id]||0)+1;render(true)}
 function dec(id){if(--cart[id]<=0)delete cart[id];render(true)}
 async function place(){
@@ -215,13 +246,22 @@ const n=$("#cn").value.trim(),p=$("#cp").value.trim(),ad=$("#ca").value.trim(),u
 if(!n||p.length<10||!ad)return alert("Enter name, phone and address");
 if(pay=="upi"&&u.length<6)return alert("Enter the UPI transaction number");
 const items=Object.keys(cart).map(id=>{const x=products.find(y=>y.id==id);return{id,name:x.name,q:cart[id],price:x.price}});
-const total=items.reduce((s,i)=>s+i.price*i.q,0);
-try{await db.collection("orders").add({uid:me.uid,name:n,phone:p,addr:ad,items,total,pay,utr:u,status:"pending",riderId:null,riderName:null,createdAt:TS()});cart={};if(me.addr!==ad){me.addr=ad;db.collection("users").doc(me.uid).update({addr:ad}).catch(()=>{})}tab="orders";render(true)}catch(e){alert(e.message)}}
-function myOrdersV(){return orders.slice().sort(byTime).map(o=>`<div class="card stack"><div class="row"><b>₹${o.total} · ${o.pay.toUpperCase()}</b>${badge(o)}</div><div class="mu">${itemsT(o)}</div>${o.riderName?`<div class="mu">Rider: ${esc(o.riderName)}</div>`:""}</div>`).join("")||'<p class="mu">No orders.</p>'}
+const T=tots(),total=T.tot;
+try{await db.collection("orders").add({uid:me.uid,name:n,phone:p,addr:ad,items,total,sub:T.sub,fee:T.fee,tax:T.tax,pay,utr:u,status:"pending",riderId:null,riderName:null,createdAt:TS()});cart={};if(me.addr!==ad){me.addr=ad;db.collection("users").doc(me.uid).update({addr:ad}).catch(()=>{})}tab="orders";render(true)}catch(e){alert(e.message)}}
+const oid=o=>"KB"+o.id.slice(-4).toUpperCase();
+const dt=o=>o.createdAt&&o.createdAt.seconds?new Date(o.createdAt.seconds*1000).toLocaleString([],{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}):"";
+const thumbs=o=>`<div class="th">${o.items.slice(0,4).map(i=>{const p=products.find(x=>x.id==i.id);return `<div>${p?img(p):'<div class="em">📦</div>'}</div>`}).join("")}</div>`;
+function oCard(o){const cur=o.status!="delivered";
+return `<div class="card oc stack"><div class="row"><b>Order #${oid(o)}</b><span class="mu">${cur?(o.status=="pending"?"Placed":"In Progress"):"Delivered"}</span></div><div>Delivery to: ${esc(o.addr)}</div><div class="mu s2">${dt(o)}</div>${thumbs(o)}<div class="row"><span>Total Amount</span><b>₹${o.total}</b></div>${trk[o.id]?`<div class="mu s2">${Object.keys(ST).map(k=>k==o.status?`<b>${ST[k]}</b>`:ST[k]).join(" → ")}</div>`:""}<div class="row">`+(cur?`<button class="b" style="flex:1" onclick="trk['${o.id}']=!trk['${o.id}'];render(true)">Track Order</button><button class="b l" style="flex:1" onclick="detail('${o.id}')">View Details</button>`:`<button class="b l" style="flex:1" onclick="reorder('${o.id}')">Reorder</button><button class="va" onclick="detail('${o.id}')">View Invoice</button>`)+`</div></div>`}
+function myOrdersV(){const L=orders.slice().sort(byTime),c=L.filter(o=>o.status!="delivered"),d=L.filter(o=>o.status=="delivered");
+return `<h2>My Orders</h2><h2>Current Orders</h2>`+(c.map(oCard).join("")||'<p class="mu">No current orders.</p>')+`<h2>Past Orders</h2>`+(d.map(oCard).join("")||'<p class="mu">No past orders.</p>')}
+function detail(id){const o=orders.find(x=>x.id==id);alert(`Order #${oid(o)}\n${dt(o)}\n\n`+o.items.map(i=>`${i.name} x ${i.q} = ₹${i.price*i.q}`).join("\n")+`\n\nItems ₹${o.sub!=null?o.sub:o.total}\nDelivery ₹${o.fee||0}\nGST ₹${o.tax||0}\nTotal ₹${o.total}\nPayment: ${o.pay.toUpperCase()}`)}
+function reorder(id){const o=orders.find(x=>x.id==id);o.items.forEach(i=>{const p=products.find(x=>x.id==i.id);if(p&&p.stock>0)cart[i.id]=Math.min(p.stock,(cart[i.id]||0)+i.q)});tab="cart";render(true)}
 
 function adminV(){
+if(tab=="cats")return CATS.map((c,i)=>`<div class="card row"><span class="row" style="gap:10px;justify-content:flex-start"><span class="ct s" style="background:${c[2]}">${catPic(i)}</span>${esc(c[0])}</span><span><button class="b l" onclick="setCat(${i})">Image</button>${catImg["c"+i]?` <button class="b l" onclick="clrCat(${i})">Reset</button>`:""}</span></div>`).join("");
 if(tab=="riders")return riders.map(r=>`<div class="card row"><span>${esc(r.name)} · <a href="tel:${esc(r.phone)}">${esc(r.phone)}</a></span><span class="tag">${!r.available?"Offline":busy(r)?"Busy":"Available"}</span></div>`).join("")||'<p class="mu">No riders.</p>';
-if(tab=="products")return `<div class="card stack"><input id="pn" placeholder="Product name"><input id="pp" type="number" placeholder="Price ₹"><input id="ps" type="number" placeholder="Stock"><input id="pi" placeholder="Emoji or image link (https://...)"><select id="pc">${CATS.map(c=>`<option>${c[0]}</option>`).join("")}</select><input id="pm" type="number" placeholder="Old price (MRP) ₹, optional">${SECS.map((x,i)=>`<label class="mu"><input id="sf${i}" type="checkbox" style="width:auto"> ${x[1]}</label>`).join("<br>")}<button class="b w" onclick="addP()">Add</button></div>`+products.map(p=>`<div class="card stack"><div class="row"><span>${esc(p.name)} · ₹${p.price} · Stock ${p.stock}</span><span><button class="b l" onclick="stk('${p.id}')">Stock</button> <button class="b l" onclick="delP('${p.id}')">Delete</button></span></div><div>${SECS.map(x=>`<button class="chip ${inSec(p,x[0])?"on":""}" onclick="tg('${p.id}','${x[0]}')">${x[1]}</button>`).join("")}</div></div>`).join("");
+if(tab=="products")return `<div class="card stack"><input id="pn" placeholder="Product name"><input id="pp" type="number" placeholder="Price ₹"><input id="ps" type="number" placeholder="Stock"><input id="pi" placeholder="Emoji or image link (optional)"><button class="b l w" onclick="pickP()">📷 Choose photo <span id="pph"></span></button><select id="pc">${CATS.map(c=>`<option>${c[0]}</option>`).join("")}</select><input id="pm" type="number" placeholder="Old price (MRP) ₹, optional">${SECS.map((x,i)=>`<label class="mu"><input id="sf${i}" type="checkbox" style="width:auto"> ${x[1]}</label>`).join("<br>")}<button class="b w" onclick="addP()">Add</button></div>`+products.map(p=>`<div class="card stack"><div class="row"><span>${esc(p.name)} · ₹${p.price} · Stock ${p.stock}</span><span><button class="b l" onclick="setPimg('${p.id}')">Photo</button> <button class="b l" onclick="stk('${p.id}')">Stock</button> <button class="b l" onclick="delP('${p.id}')">Delete</button></span></div><div>${SECS.map(x=>`<button class="chip ${inSec(p,x[0])?"on":""}" onclick="tg('${p.id}','${x[0]}')">${x[1]}</button>`).join("")}</div></div>`).join("");
 return orders.slice().sort(byTime).map(o=>{
 let h=`<div class="card stack"><div class="row"><b>${esc(o.name)} · ₹${o.total}</b>${badge(o)}</div><div class="mu">${itemsT(o)}<br>📍 ${esc(o.addr)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a><br>${o.pay=="upi"?"UPI · UTR: "+esc(o.utr):"Cash on Delivery"}</div>`;
 if(o.status=="pending")h+=`<select id="r${o.id}">${riders.map(r=>`<option value="${r.id}" ${free(r)?"":"disabled"}>${esc(r.name)} (${free(r)?"Available":busy(r)?"Busy":"Offline"})</option>`).join("")||"<option>No riders</option>"}</select><button class="b w" onclick="assign('${o.id}')">Assign rider</button>`;
@@ -230,9 +270,14 @@ return h+"</div>"}).join("")||'<p class="mu">No orders.</p>'}
 async function assign(id){const rid=$("#r"+id).value,r=riders.find(x=>x.id==rid);if(!r||!free(r))return alert("No available rider");
 try{await db.collection("orders").doc(id).update({riderId:r.id,riderName:r.name,status:"assigned",assignedAt:TS()})}catch(e){alert(e.message)}}
 async function addP(){const n=$("#pn").value.trim(),p=+$("#pp").value,s=+$("#ps").value,m=+$("#pm").value||0;if(!n||!p||s<0)return alert("Enter name, price and stock");
-try{await db.collection("products").add({name:n,price:p,mrp:m,stock:s,img:$("#pi").value.trim(),cat:$("#pc").value,sec:SECS.filter((x,i)=>$("#sf"+i).checked).map(x=>x[0])});["#pn","#pp","#ps","#pi","#pm"].forEach(x=>$(x).value="");SECS.forEach((x,i)=>$("#sf"+i).checked=false)}catch(e){alert(e.message)}}
+try{await db.collection("products").add({name:n,price:p,mrp:m,stock:s,img:pPhoto||$("#pi").value.trim(),cat:$("#pc").value,sec:SECS.filter((x,i)=>$("#sf"+i).checked).map(x=>x[0])});["#pn","#pp","#ps","#pi","#pm"].forEach(x=>$(x).value="");SECS.forEach((x,i)=>$("#sf"+i).checked=false);pPhoto=""}catch(e){alert(e.message)}}
 async function stk(id){const v=prompt("New stock quantity");if(v===null||isNaN(+v))return;db.collection("products").doc(id).update({stock:+v})}
 function tg(id,k){const p=products.find(x=>x.id==id),F=firebase.firestore.FieldValue,on=inSec(p,k),u={sec:on?F.arrayRemove(k):F.arrayUnion(k)};if(k=="featured"&&on)u.featured=false;db.collection("products").doc(id).update(u).catch(e=>alert(e.message))}
+function pickImg(max,cb){const f=document.createElement("input");f.type="file";f.accept="image/*";f.onchange=()=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas"),x=c.getContext("2d");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.75))};im.src=r.result};r.readAsDataURL(f.files[0])};f.click()}
+function pickP(){pickImg(360,d=>{pPhoto=d;$("#pph").textContent="✓"})}
+function setPimg(id){pickImg(360,d=>db.collection("products").doc(id).update({img:d}).catch(e=>alert(e.message)))}
+function setCat(i){pickImg(400,d=>db.collection("categories").doc("c"+i).set({img:d}).catch(e=>alert(e.message)))}
+function clrCat(i){db.collection("categories").doc("c"+i).delete()}
 function delP(id){if(confirm("Delete this product?"))db.collection("products").doc(id).delete()}
 
 function riderV(){
@@ -249,14 +294,14 @@ function swap(a,html){const k={};a.querySelectorAll("input[id]").forEach(e=>{if(
 function render(force){
 const a=$("#app"),nav=$("#nav");$("#hbg").style.display="none";$("#top").className="";
 if(me&&me.role!="customer"){nav.innerHTML="";
-const tabs=me.role=="admin"?[["orders","Orders"],["products","Products"],["riders","Riders"]]:[];
+const tabs=me.role=="admin"?[["orders","Orders"],["products","Products"],["cats","Categories"],["riders","Riders"]]:[];
 $("#top").innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="mu">${esc(me.name)} <button class="b l" onclick="auth.signOut()">Logout</button></span></div>`+(tabs.length?`<div class="tabs">${tabs.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="tab='${t[0]}';render(true)">${t[1]}</button>`).join("")}</div>`:"");
 return swap(a,me.role=="admin"?adminV():riderV())}
 if(showAuth&&!me){nav.innerHTML="";$("#top").innerHTML='<button class="b l" onclick="showAuth=false;render(true)">← Back to shop</button>';return swap(a,authV())}
 $("#top").innerHTML=hdr();$("#top").className=tab=="home"?"h":"";$("#hbg").style.display=tab=="home"?"block":"none";
 const N=[["home","🏠","Home"],["cat","▦","Category"],["cart","🛒","Cart"],["orders","🛍","Order"],["help","❓","Help"]];
 nav.innerHTML=N.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="tab='${t[0]}';render(true);scrollTo(0,0)"><span>${t[1]}${t[0]=="cart"&&cnt()?`<i>${cnt()}</i>`:""}</span>${t[2]}</button>`).join("");
-swap(a,tab=="cat"?catV():tab=="cart"?cartV():tab=="orders"?(me?myOrdersV():loginP("see your orders")):tab=="help"?helpV():tab=="list"?listV():tab=="prof"?(me?profV():homeV()):homeV())}
+swap(a,tab=="cat"?catV():tab=="cart"?cartV():tab=="checkout"?(me?checkoutV():cartV()):tab=="wish"?wishV():tab=="orders"?(me?myOrdersV():loginP("see your orders")):tab=="help"?helpV():tab=="list"?listV():tab=="prof"?(me?profV():homeV()):homeV())}
 </script>
 </body>
 </html>
