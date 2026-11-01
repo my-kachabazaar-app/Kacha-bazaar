@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12703f">
+<link rel="manifest" href="manifest-admin.json">
+<link rel="icon" href="logo.png"><link rel="apple-touch-icon" href="icon-192.png">
+<title>Kacha Bazaar Admin</title><meta name="robots" content="noindex">
+<style>
+:root{--bg:#f6f4fb;--card:#fff;--tx:#1d1b26;--mu:#6b6880;--pr:#12703f;--ok:#1a9d5c;--bd:#e4e0ef;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#15131c;--card:#201d2b;--tx:#f0eef7;--mu:#a29fb5;--pr:#4ade80;--ok:#3ccf86;--bd:#332f43}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI","Noto Sans Bengali",sans-serif}
+#top{position:sticky;top:0;background:var(--bg);padding:10px 14px 6px;z-index:5}
+.tabs{display:flex;gap:6px;margin-top:8px}
+.tabs{overflow-x:auto}.tabs button{flex:0 0 auto;padding:9px 12px;padding:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit}
+.tabs button.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+main{padding:4px 14px 40px;max-width:760px;margin:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px}
+.em{font-size:38px;text-align:center}.card img{width:100%;height:90px;object-fit:cover;border-radius:8px}
+.pn{font-weight:600}.mu{color:var(--mu)}
+.b{display:inline-block;background:var(--pr);color:#fff;border:0;border-radius:9px;padding:8px 12px;font:inherit;text-decoration:none;text-align:center}
+.b.w{width:100%;margin-top:8px}.b.g{background:var(--ok)}.b.l{background:transparent;color:var(--mu);border:1px solid var(--bd)}
+input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit;margin:3px 0}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--bd);white-space:nowrap}
+.s-delivered{background:var(--ok);color:#fff}
+h2{font-size:16px;margin:16px 0 8px}
+.stack>*{margin-bottom:8px}a{color:var(--pr)}
+main{padding-bottom:90px}
+.logo{font-size:22px;font-weight:800}
+.srch{border-radius:99px;padding:12px 16px;margin-bottom:8px}
+.hs{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}
+.bn{flex:0 0 80%;scroll-snap-align:start;border-radius:14px;padding:14px;display:flex;justify-content:space-between;align-items:center;color:#1d1b26;min-height:110px}
+.bn b{font-size:18px}.bn .s{font-size:13px;margin:2px 0 8px}.sn{background:#12703f;color:#fff;font-size:11px;padding:4px 10px;border-radius:99px}.be{font-size:54px}
+.cg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ct{aspect-ratio:1;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:34px}
+.cl{font-size:12px;text-align:center;margin-top:4px}
+.pc{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px;flex:0 0 150px;display:flex;flex-direction:column;gap:4px}
+.grid .pc{flex:initial}.pc img{width:100%;height:90px;object-fit:cover;border-radius:8px}
+.add{border:1px solid var(--pr);color:var(--pr);background:transparent;border-radius:8px;padding:3px 8px;font:inherit;font-size:12px;font-weight:700}
+.qty{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--pr);border-radius:8px;padding:0 2px}
+.qty button{border:0;background:none;color:var(--pr);font-size:18px;padding:2px 6px}
+#nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px);z-index:9}
+#nav button{flex:1;border:0;background:none;color:var(--mu);font:inherit;font-size:11px;padding:8px 2px}
+#nav button.on{color:var(--pr);font-weight:700}
+#nav span{display:block;font-size:20px;position:relative}
+#nav i{position:absolute;top:-4px;right:calc(50% - 22px);background:var(--pr);color:#fff;font-size:10px;font-style:normal;border-radius:99px;padding:0 5px}
+body{position:relative}
+#hbg{position:absolute;top:0;left:0;right:0;height:400px;background:url(store-bg.jpg) center top/cover;opacity:.5;-webkit-mask-image:linear-gradient(#000 50%,transparent);mask-image:linear-gradient(#000 50%,transparent);z-index:-1;pointer-events:none;display:none}
+#top.h{position:relative;background:transparent}
+.hd{gap:10px}.pb{border:2px solid var(--pr);background:#fff;border-radius:50%;padding:0;width:46px;height:46px;flex:none;overflow:hidden}.pb img{width:100%;height:100%;object-fit:cover;display:block;border-radius:0}
+.hd .logo{flex:1;font-size:20px}
+.va{border:0;background:none;color:var(--pr);font:inherit;font-weight:700;font-size:13px}
+.chip{border:1px solid var(--bd);background:transparent;color:var(--mu);border-radius:99px;padding:3px 9px;font:inherit;font-size:12px;margin:2px 3px 0 0}.chip.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.av{text-align:center;padding:8px 0}.avc{width:84px;height:84px;border-radius:50%;background:var(--pr);color:#fff;font-size:36px;display:flex;align-items:center;justify-content:center;margin:0 auto 6px}
+.tl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin:10px 0}.tl div{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 4px;font-size:13px}
+.kc{background:#efe6fb;color:#1d1b26}
+.pl{padding:0 12px}.pi{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--bd)}.pi:last-child{border:0}.pi div{flex:1}.s2{font-size:12px}
+.pc{position:relative}.hz{position:absolute;top:6px;right:6px;border:0;background:#fffc;border-radius:50%;width:28px;height:28px;font-size:15px;padding:0}.hz2{border:0;background:none;font-size:22px;padding:0 2px}
+.ct img{width:100%;height:100%;object-fit:cover;border-radius:16px}.ct.s{width:44px;height:44px;aspect-ratio:auto;font-size:22px;flex:none}
+.kg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kcard{border-radius:16px;padding:8px;text-align:center;color:#1d1b26;font-weight:600;font-size:14px;aspect-ratio:1.5/1;display:flex;flex-direction:column;justify-content:flex-end}.kcard img{width:100%;height:62%;object-fit:cover;border-radius:12px}.kcard .em{font-size:46px}
+.dis{border-radius:14px;padding:18px;text-align:center;font-weight:800;background:linear-gradient(90deg,#d9f0d2,#f2fbe9,#d9f0d2);color:#1d1b26;margin-bottom:10px}
+.ci{display:flex;gap:10px;align-items:center}.ci img,.ci .em{width:64px;height:64px;flex:none;object-fit:cover;font-size:34px;line-height:64px}
+.bt{background:#e5f4e8;color:#12703f;border-radius:10px;padding:10px;font-size:17px}
+.oc{background:linear-gradient(rgba(255,255,255,.84),rgba(255,255,255,.84)),url(store-bg.jpg) center/cover}
+@media (prefers-color-scheme:dark){.oc{background:linear-gradient(rgba(32,29,43,.9),rgba(32,29,43,.9)),url(store-bg.jpg) center/cover}}
+.th{display:flex;gap:8px}.th>div{width:58px;height:58px;background:#fff;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}.th img{width:100%;height:100%;object-fit:cover}.th .em{font-size:28px}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<main id="app"></main>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===== Edit these values ===== */
+const firebaseConfig={apiKey:"AIzaSyCNPi7mLkWMz1kGo3b2YXstjM65wbB0ZLw",authDomain:"kacha-bazaar-7fda3.firebaseapp.com",projectId:"kacha-bazaar-7fda3",appId:"1:117258766044:web:95ece03ae97604d7efd619"};
+const STORE="Kacha Bazaar";
+let UPI_ID="yourname@upi";
+let SUPPORT_PHONE="";
+let SUPPORT_EMAIL="";
+let DELIVERY_FEE=30,TAX_PCT=5;
+/* ========================================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ST={pending:"Pending",assigned:"Assigned",accepted:"Accepted",collected:"Collected",delivered:"Delivered"};
+const ACTIVE=["assigned","accepted","collected"];
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+if(firebaseConfig.apiKey.startsWith("YOUR")){document.getElementById("app").innerHTML='<div class="card"><b>Setup pending</b><p>Add your firebaseConfig in index.html.</p></div>';throw new Error("config missing")}
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();
+let me=null,unsubs=[],products=[],orders=[],riders=[],tab="dash",signing=false,showAuth=false,after="",catImg={},pPhoto="";
+function stop(){unsubs.forEach(u=>u());unsubs=[]}
+function ping(m){try{navigator.vibrate&&navigator.vibrate([200,100,200]);if(window.Notification&&Notification.permission==="granted")new Notification(m)}catch(e){}}
+function soft(){const e=document.activeElement;if(e&&/INPUT|SELECT/.test(e.tagName))return;render()}
+function listen(q,set,msg){let f=true;unsubs.push(q.onSnapshot(s=>{const a=[];s.forEach(d=>a.push(Object.assign({id:d.id},d.data())));if(!f&&msg&&s.docChanges().some(c=>c.type==="added"))ping(msg);set(a);f=false;soft()},e=>alert(e.message)))}
+
+let scr="id",ctx={},resetting=false;
+const pw=p=>"kb#"+p+"#bazaar";
+const isPin=p=>/^\d{4}$/.test(p);
+const normId=v=>{v=v.trim().toLowerCase();const d=v.replace(/\D/g,"");return v.includes("@")?v:(d.length>=10?d.slice(-10):"")};
+function route(u){if(!u){me=null;scr="id";ctx={};return render(true)}boot(u)}
+auth.onAuthStateChanged(u=>{if(signing||resetting)return;stop();me=null;route(u)});
+if(auth.isSignInWithEmailLink(location.href)){resetting=true;(async()=>{try{
+const em=localStorage.getItem("qd_reset")||prompt("Enter the email address the link was sent to");
+await auth.signInWithEmailLink(em.trim(),location.href);history.replaceState(null,"",location.pathname);scr="newpin";showAuth=true;render(true)
+}catch(e){resetting=false;alert(e.message);history.replaceState(null,"",location.pathname);route(auth.currentUser)}})()}
+async function boot(u){
+const d=await db.collection("users").doc(u.uid).get();
+if(!d.exists||d.data().role!="admin"){alert("This is the admin site. This account is not an admin.");return auth.signOut()}
+me=Object.assign({uid:u.uid},d.data());tab="dash";
+listen(db.collection("products"),a=>products=a);
+listen(db.collection("categories"),a=>{catImg={};a.forEach(c=>catImg[c.id]=c.img)});
+listen(db.collection("orders"),a=>orders=a,"New order received!");
+listen(db.collection("users").where("role","==","rider"),a=>riders=a);
+if(window.Notification&&Notification.permission==="default")Notification.requestPermission();
+render(true)}
+function authV(){
+const B=(t,f,c)=>`<button class="b w ${c||""}" onclick="${f}">${t}</button>`;
+const pin=(id,ph)=>`<input id="${id}" type="password" inputmode="numeric" maxlength="4" placeholder="${ph}">`;
+let h='<div class="card stack">';
+if(scr=="id")h+=`<h2>Login</h2><input id="ix" placeholder="Mobile number or email" value="${esc(ctx.id||"")}">`+B("Continue","next()");
+else if(scr=="pin")h+=`<h2>Enter your 4-digit password</h2><div class="mu">${esc(ctx.id)}</div>${pin("pn","••••")}`+B("Login","login()")+B("Forgot password?","forgot()","l")+B("Use another number/email","scr='id';render(true)","l");
+else if(scr=="new")h+=`<h2>Create account</h2><div class="mu">No account found. Fill in the details below to create one.</div><input id="nm" placeholder="Name"><input id="ph" type="tel" placeholder="Mobile number (10 digits)" value="${esc(ctx.ph||"")}"><input id="em" type="email" placeholder="Email" value="${esc(ctx.em||"")}">${pin("p1","New 4-digit password")}${pin("p2","Re-enter password")}`+B("Create account","signup()")+B("Back","scr='id';render(true)","l");
+else if(scr=="verify")h+=`<h2>Verify your email</h2><p>${esc(ctx.email)} — a verification link has been sent to this address (check Spam if you can't find it). Click the link, then come back and tap the button below.</p>`+B("I have verified","chk()")+B("Resend link","resend()","l")+B("Logout","auth.signOut()","l");
+else if(scr=="forgot")h+=`<h2>Change password</h2><p>${esc(ctx.email)} — a link has been sent to this address. Click it to set a new 4-digit password.</p>`+B("Back to login","scr='id';render(true)","l");
+else if(scr=="newpin")h+=`<h2>New 4-digit password</h2>${pin("p1","New password")}${pin("p2","Re-enter password")}`+B("Save","setPin()");
+return h+"</div>"}
+async function next(){const k=normId($("#ix").value);if(!k)return alert("Enter a valid mobile number or email");
+try{const d=await db.collection("lookup").doc(k).get();ctx.id=$("#ix").value.trim();
+if(d.exists){ctx.email=d.data().email;scr="pin"}else{scr="new";ctx.em=k.includes("@")?k:"";ctx.ph=k.includes("@")?"":k}
+render(true)}catch(e){alert(e.message)}}
+async function login(){const p=$("#pn").value;if(!isPin(p))return alert("Enter a 4-digit number");
+try{await auth.signInWithEmailAndPassword(ctx.email,pw(p))}catch(e){alert(e.code=="auth/too-many-requests"?"Too many attempts. Please try again later.":"Wrong password")}}
+async function signup(){
+const nm=$("#nm").value.trim(),ph=$("#ph").value.replace(/\D/g,"").slice(-10),em=$("#em").value.trim().toLowerCase(),p=$("#p1").value;
+if(!nm||ph.length!=10||!em.includes("@"))return alert("Enter your name, a 10-digit mobile number and email");
+if(!isPin(p)||p!=$("#p2").value)return alert("Enter the same 4 digits twice");
+try{signing=true;
+for(const k of [ph,em])if((await db.collection("lookup").doc(k).get()).exists)throw new Error("An account already exists for this mobile or email. Please log in.");
+const u=(await auth.createUserWithEmailAndPassword(em,pw(p))).user;
+await db.collection("users").doc(u.uid).set({name:nm,phone:ph,email:em,role:$("#rl").value,available:false});
+await db.collection("lookup").doc(ph).set({email:em,uid:u.uid});
+await db.collection("lookup").doc(em).set({email:em,uid:u.uid});
+signing=false;route(u)
+}catch(e){signing=false;alert(e.message)}}
+async function chk(){try{const u=auth.currentUser;await u.reload();if(!u.emailVerified)return alert("Not verified yet. Click the link in your email.");await u.getIdToken(true);route(u)}catch(e){alert(e.message)}}
+function resend(){auth.currentUser.sendEmailVerification().then(()=>alert("Link sent again")).catch(e=>alert(e.message))}
+async function forgot(){try{localStorage.setItem("qd_reset",ctx.email);await auth.sendSignInLinkToEmail(ctx.email,{url:location.origin+location.pathname,handleCodeInApp:true});scr="forgot";render(true)}catch(e){alert(e.message)}}
+async function setPin(){const p=$("#p1").value;if(!isPin(p)||p!=$("#p2").value)return alert("Enter the same 4 digits twice");
+try{const u=auth.currentUser;await u.updatePassword(pw(p));localStorage.removeItem("qd_reset");resetting=false;alert("New password has been set");await u.getIdToken(true);route(u)}catch(e){alert(e.message)}}
+
+async function next(){const k=normId($("#ix").value);if(!k)return alert("Enter a valid mobile number or email");
+try{const d=await db.collection("lookup").doc(k).get();if(!d.exists)return alert("No account found. Admin accounts are set up by the store owner.");ctx.id=$("#ix").value.trim();ctx.email=d.data().email;scr="pin";render(true)}catch(e){alert(e.message)}}
+const img=p=>/^(https?:|data:)/.test(p.img||"")?`<img src="${esc(p.img)}" alt="">`:`<div class="em">${esc(p.img||"📦")}</div>`;
+const itemsT=o=>o.items.map(i=>esc(i.name)+" × "+i.q).join(", ");
+const badge=o=>`<span class="tag ${o.status=="delivered"?"s-delivered":""}">${o.status=="delivered"?"Completed ✓":ST[o.status]}</span>`;
+const byTime=(a,b)=>((b.createdAt&&b.createdAt.seconds)||9e9)-((a.createdAt&&a.createdAt.seconds)||9e9);
+const busy=r=>orders.some(o=>o.riderId==r.id&&ACTIVE.includes(o.status));
+const free=r=>r.approved&&r.available&&!busy(r);
+
+const CATS=[["Vegetables & Fruits","🥦","#f7c6cc"],["Fresh Meat & Seafood","🍗","#f7c6cc"],["Dairy & Eggs","🥛","#bfdcf7"],["Bakery & Biscuits","🍞","#f6dcc2"],["Snacks & Munchies","🍪","#fde3a7"],["Cold Drinks & Juices","🥤","#cdebc3"],["Atta, Rice & Dals","🌾","#eadfcd"],["Masalas & Oils","🌶️","#f6d3b3"],["Personal Care","🧴","#c4ecee"],["Household Essentials","🧽","#c5e1f7"]];
+db.collection("settings").doc("store").onSnapshot(d=>{const c=d.data()||{};if(c.deliveryFee!=null)DELIVERY_FEE=+c.deliveryFee;if(c.taxPct!=null)TAX_PCT=+c.taxPct;if(c.upiId)UPI_ID=c.upiId;if(c.supportPhone)SUPPORT_PHONE=c.supportPhone;if(c.supportEmail)SUPPORT_EMAIL=c.supportEmail;soft()},e=>console.log(e.message));
+const LOGO='<span style="color:var(--pr)">Kacha</span> <span style="color:#e8801a">Bazaar</span>';
+const SECS=[["fresh","Fresh Today"],["featured","Featured Products"],["best","Best Sellers"],["seasonal","Seasonal Specials"]];
+const inSec=(p,k)=>(p.sec||[]).includes(k)||(k=="featured"&&p.featured);
+const catPic=i=>catImg["c"+i]?`<img src="${catImg["c"+i]}" alt="">`:CATS[i][1];
+const oid=o=>"KB"+o.id.slice(-4).toUpperCase();
+const dt=o=>o.createdAt&&o.createdAt.seconds?new Date(o.createdAt.seconds*1000).toLocaleString([],{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}):"";
+var ofl="all",aq="",addOpen=false;
+const OF=[["all","All"],["pending","Pending"],["assigned","Assigned"],["accepted","Accepted"],["collected","Collected"],["delivered","Delivered"]];
+const secs=o=>(o.createdAt&&o.createdAt.seconds)||0;
+const today0=()=>{const d=new Date();d.setHours(0,0,0,0);return d/1000};
+function dashV(){
+const T=orders.filter(o=>secs(o)>=today0()),rev=T.reduce((n,o)=>n+o.total,0),pend=orders.filter(o=>o.status=="pending"),act=orders.filter(o=>ACTIVE.includes(o.status)),dn=orders.filter(o=>o.status=="delivered"),low=products.filter(p=>p.stock<=5);
+const S=(t,v,c)=>`<div class="card"><div class="mu s2">${t}</div><b style="font-size:22px;${c||""}">${v}</b></div>`;
+const rf=riders.filter(free).length,rb=riders.filter(busy).length;
+return `<div class="kg">${S("Today's Orders",T.length)}${S("Today's Sales","₹"+rev)}${S("Pending",pend.length,pend.length?"color:#d9480f":"")}${S("On the way",act.length)}${S("Delivered (all)",dn.length)}${S("Low stock (≤5)",low.length,low.length?"color:#d9480f":"")}</div>
+<div class="card stack"><b>Riders</b><div class="row"><span>Available</span><b>${rf}</b></div><div class="row"><span>Busy</span><b>${rb}</b></div><div class="row"><span>Offline</span><b>${riders.length-rf-rb}</b></div></div>`
++(pend.length?`<div class="card stack"><b>Needs a rider</b>${pend.slice(0,5).map(o=>`<div class="row"><span>#${oid(o)} · ${esc(o.name)}</span><b>₹${o.total}</b></div>`).join("")}<button class="b w" onclick="ofl='pending';tab='orders';render(true)">Open orders</button></div>`:"")
++(low.length?`<div class="card stack"><b>Low stock</b>${low.slice(0,8).map(p=>`<div class="row"><span>${esc(p.name)}</span><b>${p.stock}</b></div>`).join("")}</div>`:"")}
+function aCard(o){
+let h=`<div class="card stack"><div class="row"><b>#${oid(o)} · ${esc(o.name)}</b>${badge(o)}</div><div class="mu s2">${dt(o)}</div><div>${itemsT(o)}</div><div class="row"><span>₹${o.total} · ${o.pay=="upi"?"UPI":"COD"}</span>${o.pay=="upi"?`<button class="chip ${o.paid?"on":""}" onclick="paid('${o.id}',${!o.paid})">${o.paid?"Payment verified ✓":"Verify UTR "+esc(o.utr)}</button>`:""}</div><div class="mu">📍 ${esc(o.addr)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></div>`;
+if(o.status=="pending")h+=`<select id="r${o.id}">${riders.map(r=>`<option value="${r.id}" ${free(r)?"":"disabled"}>${esc(r.name)} (${free(r)?"Available":busy(r)?"Busy":"Offline"})</option>`).join("")||"<option>No riders</option>"}</select><button class="b w" onclick="assign('${o.id}')">Assign rider</button>`;
+else h+=`<div class="mu">Rider: ${esc(o.riderName)}</div>`;
+return h+"</div>"}
+function ordList(){const k=aq.trim().toLowerCase();return orders.slice().sort(byTime).filter(o=>(ofl=="all"||o.status==ofl)&&(!k||(oid(o)+o.name+o.phone).toLowerCase().includes(k))).map(aCard).join("")||'<p class="mu">No orders.</p>'}
+function paid(id,v){db.collection("orders").doc(id).update({paid:v}).catch(e=>alert(e.message))}
+const prodForm=()=>`<div class="card stack"><input id="pn" placeholder="Product name"><input id="pp" type="number" placeholder="Price ₹"><input id="ps" type="number" placeholder="Stock"><input id="pi" placeholder="Emoji or image link (optional)"><button class="b l w" onclick="pickP()">📷 Choose photo <span id="pph"></span></button><select id="pc">${CATS.map(c=>`<option>${esc(c[0])}</option>`).join("")}</select><input id="pm" type="number" placeholder="Old price (MRP) ₹, optional">${SECS.map((x,i)=>`<label class="mu"><input id="sf${i}" type="checkbox" style="width:auto"> ${x[1]}</label>`).join("<br>")}<button class="b w" onclick="addP()">Add</button></div>`;
+function prodList(){const k=aq.trim().toLowerCase();return products.filter(p=>!k||p.name.toLowerCase().includes(k)).map(p=>`<div class="card stack"><div class="ci">${img(p)}<div style="flex:1"><b>${esc(p.name)}</b><div class="mu s2">₹${p.price}${p.mrp>p.price?" (MRP ₹"+p.mrp+")":""} · Stock ${p.stock}</div><select onchange="setCatP('${p.id}',this.value)"><option value="">Category…</option>${CATS.map(c=>`<option ${p.cat==c[0]?"selected":""}>${esc(c[0])}</option>`).join("")}</select></div></div><div>${SECS.map(x=>`<button class="chip ${inSec(p,x[0])?"on":""}" onclick="tg('${p.id}','${x[0]}')">${x[1]}</button>`).join("")}</div><div class="row"><button class="b l" onclick="editProd('${p.id}')">✏️ Edit</button><button class="b l" onclick="setPimg('${p.id}')">Photo</button><button class="b l" onclick="stk('${p.id}')">Stock</button><button class="b l" onclick="delP('${p.id}')">Delete</button></div></div>`).join("")||'<p class="mu">No products.</p>'}
+function editProd(id){const p=products.find(x=>x.id==id),n=prompt("Name",p.name);if(n===null)return;const pr=prompt("Price ₹",p.price);if(pr===null)return;const m=prompt("Old price (MRP) ₹, 0 = none",p.mrp||0);if(m===null)return;db.collection("products").doc(id).update({name:n.trim()||p.name,price:+pr||p.price,mrp:+m||0}).catch(e=>alert(e.message))}
+function setCatP(id,v){if(v)db.collection("products").doc(id).update({cat:v}).catch(e=>alert(e.message))}
+function ridV(){return riders.map(r=>{const m=orders.filter(o=>o.riderId==r.id),a=m.filter(o=>ACTIVE.includes(o.status)).length,d=m.filter(o=>o.status=="delivered").length;return `<div class="card stack"><div class="row"><b>${esc(r.name)}</b><span class="tag">${!r.approved?"Pending approval":!r.available?"Offline":busy(r)?"Busy":"Available"}</span></div><div class="mu"><a href="tel:${esc(r.phone)}">${esc(r.phone)}</a> · Active ${a} · Delivered ${d}</div><button class="b ${r.approved?"l":""} w" onclick="appr('${r.id}',${!r.approved})">${r.approved?"Revoke access":"Approve rider"}</button></div>`}).join("")||'<p class="mu">No riders yet. Riders sign up on the rider website, then you approve them here.</p>'}
+function appr(id,v){db.collection("users").doc(id).update({approved:v}).catch(e=>alert(e.message))}
+const setV=()=>`<div class="card stack"><b>Store settings</b><label class="mu">Delivery fee ₹</label><input id="st_fee" type="number" value="${DELIVERY_FEE}"><label class="mu">GST / tax %</label><input id="st_tax" type="number" value="${TAX_PCT}"><label class="mu">UPI ID (for payments)</label><input id="st_upi" value="${esc(UPI_ID)}"><label class="mu">Support phone</label><input id="st_ph" type="tel" value="${esc(SUPPORT_PHONE)}"><label class="mu">Support email</label><input id="st_em" type="email" value="${esc(SUPPORT_EMAIL)}"><button class="b w" onclick="saveSet()">Save settings</button></div>`;
+async function saveSet(){const c={deliveryFee:+$("#st_fee").value||0,taxPct:+$("#st_tax").value||0,upiId:$("#st_upi").value.trim(),supportPhone:$("#st_ph").value.trim(),supportEmail:$("#st_em").value.trim()};try{await db.collection("settings").doc("store").set(c);alert("Saved")}catch(e){alert(e.message)}}
+function aS(v){aq=v;$("#ares").innerHTML=tab=="orders"?ordList():prodList()}
+function adminV(){
+if(tab=="dash")return dashV();
+if(tab=="riders")return ridV();
+if(tab=="set")return setV();
+if(tab=="cats")return CATS.map((c,i)=>`<div class="card row"><span class="row" style="gap:10px;justify-content:flex-start"><span class="ct s" style="background:${c[2]}">${catPic(i)}</span>${esc(c[0])}</span><span><button class="b l" onclick="setCat(${i})">Image</button>${catImg["c"+i]?` <button class="b l" onclick="clrCat(${i})">Reset</button>`:""}</span></div>`).join("");
+if(tab=="products")return `<button class="b w" onclick="addOpen=!addOpen;render(true)">${addOpen?"Close":"+ Add product"}</button>`+(addOpen?prodForm():"")+`<input id="aq" class="srch" placeholder="Search products" value="${esc(aq)}" oninput="aS(this.value)" style="margin-top:10px"><div id="ares">${prodList()}</div>`;
+return `<div class="hs">${OF.map(f=>`<button class="chip ${ofl==f[0]?"on":""}" onclick="ofl='${f[0]}';render(true)">${f[1]} ${f[0]=="all"?orders.length:orders.filter(o=>o.status==f[0]).length}</button>`).join("")}</div><input id="aq" class="srch" placeholder="Search order no., name or phone" value="${esc(aq)}" oninput="aS(this.value)"><div id="ares">${ordList()}</div>`}
+async function assign(id){const rid=$("#r"+id).value,r=riders.find(x=>x.id==rid);if(!r||!free(r))return alert("No available rider");
+try{await db.collection("orders").doc(id).update({riderId:r.id,riderName:r.name,status:"assigned",assignedAt:TS()})}catch(e){alert(e.message)}}
+async function addP(){const n=$("#pn").value.trim(),p=+$("#pp").value,s=+$("#ps").value,m=+$("#pm").value||0;if(!n||!p||s<0)return alert("Enter name, price and stock");
+try{await db.collection("products").add({name:n,price:p,mrp:m,stock:s,img:pPhoto||$("#pi").value.trim(),cat:$("#pc").value,sec:SECS.filter((x,i)=>$("#sf"+i).checked).map(x=>x[0])});["#pn","#pp","#ps","#pi","#pm"].forEach(x=>$(x).value="");SECS.forEach((x,i)=>$("#sf"+i).checked=false);pPhoto="";addOpen=false;render(true)}catch(e){alert(e.message)}}
+async function stk(id){const v=prompt("New stock quantity");if(v===null||isNaN(+v))return;db.collection("products").doc(id).update({stock:+v})}
+function tg(id,k){const p=products.find(x=>x.id==id),F=firebase.firestore.FieldValue,on=inSec(p,k),u={sec:on?F.arrayRemove(k):F.arrayUnion(k)};if(k=="featured"&&on)u.featured=false;db.collection("products").doc(id).update(u).catch(e=>alert(e.message))}
+function pickImg(max,cb){const f=document.createElement("input");f.type="file";f.accept="image/*";f.onchange=()=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas"),x=c.getContext("2d");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.75))};im.src=r.result};r.readAsDataURL(f.files[0])};f.click()}
+function pickP(){pickImg(360,d=>{pPhoto=d;$("#pph").textContent="✓"})}
+function setPimg(id){pickImg(360,d=>db.collection("products").doc(id).update({img:d}).catch(e=>alert(e.message)))}
+function setCat(i){pickImg(400,d=>db.collection("categories").doc("c"+i).set({img:d}).catch(e=>alert(e.message)))}
+function clrCat(i){db.collection("categories").doc("c"+i).delete()}
+function delP(id){if(confirm("Delete this product?"))db.collection("products").doc(id).delete()}
+
+function swap(a,html){const k={};a.querySelectorAll("input[id]").forEach(e=>{if(e.type!="password")k[e.id]=e.value});a.innerHTML=html;Object.keys(k).forEach(i=>{const e=document.getElementById(i);if(e&&k[i]!==""&&e.type!="checkbox")e.value=k[i]})}
+function render(force){
+const a=$("#app"),top=$("#top");
+if(!me){top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="tag">ADMIN</span></div>`;return swap(a,authV())}
+const tabs=[["dash","Dashboard"],["orders","Orders"],["products","Products"],["cats","Categories"],["riders","Riders"],["set","Settings"]];
+top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="mu">${esc(me.name)} <button class="b l" onclick="auth.signOut()">Logout</button></span></div><div class="tabs">${tabs.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="aq='';tab='${t[0]}';render(true)">${t[1]}</button>`).join("")}</div>`;
+swap(a,adminV())}
+</script>
+</body>
+</html>
