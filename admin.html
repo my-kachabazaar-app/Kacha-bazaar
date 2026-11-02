@@ -89,6 +89,7 @@ body{position:relative}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="push.js"></script>
 <script>
 /* ===== Edit these values ===== */
 const firebaseConfig={apiKey:"AIzaSyCNPi7mLkWMz1kGo3b2YXstjM65wbB0ZLw",authDomain:"kacha-bazaar-7fda3.firebaseapp.com",projectId:"kacha-bazaar-7fda3",appId:"1:117258766044:web:95ece03ae97604d7efd619"};
@@ -125,7 +126,7 @@ await auth.signInWithEmailLink(em.trim(),location.href);history.replaceState(nul
 async function boot(u){
 const d=await db.collection("users").doc(u.uid).get();
 if(!d.exists||d.data().role!="admin"){alert("This is the admin site. This account is not an admin.");return auth.signOut()}
-me=Object.assign({uid:u.uid},d.data());tab="dash";
+me=Object.assign({uid:u.uid},d.data());tab="dash";window.kbPush&&kbPush(db,u.uid,me.role);
 listen(db.collection("products"),a=>products=a);
 listen(db.collection("categories"),a=>{catImg={};a.forEach(c=>catImg[c.id]=c.img)});
 listen(db.collection("orders"),a=>orders=a,"New order received!");
@@ -215,7 +216,7 @@ const setV=()=>`<div class="card stack"><b>Store settings</b><label class="mu">D
 async function saveSet(){const c={deliveryFee:+$("#st_fee").value||0,taxPct:+$("#st_tax").value||0,upiId:$("#st_upi").value.trim(),supportPhone:$("#st_ph").value.trim(),supportEmail:$("#st_em").value.trim()};try{await db.collection("settings").doc("store").set(c);alert("Saved")}catch(e){alert(e.message)}}
 function aS(v){aq=v;$("#ares").innerHTML=tab=="orders"?ordList():prodList()}
 function adminV(){
-if(tab=="rset")return rsetV();if(tab=="tix")return tixV();if(tab=="dash")return dashV();
+if(tab=="notify")return notifV();if(tab=="rset")return rsetV();if(tab=="tix")return tixV();if(tab=="dash")return dashV();
 if(tab=="riders")return ridV();
 if(tab=="set")return setV();
 if(tab=="cats")return CATS.map((c,i)=>`<div class="card row"><span class="row" style="gap:10px;justify-content:flex-start"><span class="ct s" style="background:${c[2]}">${catPic(i)}</span>${esc(c[0])}</span><span><button class="b l" onclick="setCat(${i})">Image</button>${catImg["c"+i]?` <button class="b l" onclick="clrCat(${i})">Reset</button>`:""}</span></div>`).join("");
@@ -251,11 +252,13 @@ return tickets.slice().sort(byTime).map(t=>`<div class="card row" onclick="tkA='
 function arep(id){const x=$("#ar").value.trim();if(!x)return;db.collection("tickets").doc(id).update({msgs:firebase.firestore.FieldValue.arrayUnion({from:"admin",text:x,at:Date.now()})}).then(()=>{$("#ar").value=""}).catch(e=>alert(e.message))}
 function tset(id,s){db.collection("tickets").doc(id).update({status:s}).catch(e=>alert(e.message))}
 function pop(h){let p=document.getElementById("pop");if(!p){p=document.createElement("div");p.id="pop";document.body.appendChild(p)}p.innerHTML=`<div class="pb2" onclick="if(event.target==this)this.parentNode.style.display='none'"><div class="pc2">${h}<button class="b w" onclick="document.getElementById('pop').style.display='none'">Close</button></div></div>`;p.style.display="block"}
+function notifV(){return `<div class="card stack"><b>Send a notification to phones</b><select id="nt"><option value="customer">All customers</option><option value="rider">All riders</option><option value="all">Everyone</option></select><input id="nti" placeholder="Title"><input id="nb" placeholder="Message"><button class="b w" onclick="sendN()">Send</button><div class="mu s2">Order, delivery time, ticket and approval notifications are sent automatically.</div></div>`}
+function sendN(){const t=$("#nti").value.trim(),b=$("#nb").value.trim();if(!t||!b)return alert("Enter a title and a message");if(!confirm("Send this notification now?"))return;db.collection("broadcasts").add({to:$("#nt").value,title:t,body:b,at:Date.now()}).then(()=>{alert("Sent");$("#nti").value="";$("#nb").value=""}).catch(e=>alert(e.message))}
 function swap(a,html){const k={};a.querySelectorAll("input[id]").forEach(e=>{if(e.type!="password")k[e.id]=e.value});a.innerHTML=html;Object.keys(k).forEach(i=>{const e=document.getElementById(i);if(e&&k[i]!==""&&e.type!="checkbox")e.value=k[i]})}
 function render(force){
 const a=$("#app"),top=$("#top");
 if(!me){top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="tag">ADMIN</span></div>`;return swap(a,authV())}
-const tabs=[["dash","Dashboard"],["orders","Orders"],["products","Products"],["cats","Categories"],["riders","Riders"],["tix","Tickets"],["rset","Rider setup"],["set","Settings"]];
+const tabs=[["dash","Dashboard"],["orders","Orders"],["products","Products"],["cats","Categories"],["riders","Riders"],["tix","Tickets"],["notify","Notify"],["rset","Rider setup"],["set","Settings"]];
 top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="mu">${esc(me.name)} <button class="b l" onclick="auth.signOut()">Logout</button></span></div><div class="tabs">${tabs.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="aq='';tab='${t[0]}';render(true)">${t[1]}</button>`).join("")}</div>`;
 swap(a,adminV())}
 </script>

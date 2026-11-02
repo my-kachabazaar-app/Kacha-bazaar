@@ -1,0 +1,118 @@
+name: Build APKs
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - key: customer
+            appid: com.kachabazaar.app
+            appname: Kacha Bazaar
+            url: https://my-kachabazaar-app.github.io/Kacha-bazaar/
+            tag: ""
+            color: "#12703f"
+          - key: admin
+            appid: com.kachabazaar.admin
+            appname: KB Admin
+            url: https://my-kachabazaar-app.github.io/Kacha-bazaar/admin.html
+            tag: ADMIN
+            color: "#c62828"
+          - key: rider
+            appid: com.kachabazaar.rider
+            appname: KB Rider
+            url: https://my-kachabazaar-app.github.io/Kacha-bazaar/rider.html
+            tag: RIDER
+            color: "#1565c0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Create the Capacitor project
+        run: |
+          mkdir app
+          cd app
+          npm init -y
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/push-notifications@6 @capacitor/splash-screen@6
+          mkdir www
+          echo "<!doctype html><title>${{ matrix.appname }}</title>" > www/index.html
+          cat > capacitor.config.json <<JSON
+          {
+            "appId": "${{ matrix.appid }}",
+            "appName": "${{ matrix.appname }}",
+            "webDir": "www",
+            "server": { "url": "${{ matrix.url }}", "androidScheme": "https" },
+            "plugins": {
+              "SplashScreen": { "launchShowDuration": 1800, "launchAutoHide": true, "backgroundColor": "#FFFFFF", "androidScaleType": "CENTER_INSIDE", "showSpinner": false }
+            }
+          }
+          JSON
+          npx cap add android
+      - name: Make icons and splash screen from the logo
+        run: |
+          pip install pillow
+          mkdir -p app/assets
+          python3 - <<'PY'
+          from PIL import Image, ImageDraw, ImageFont
+          tag = "${{ matrix.tag }}"
+          color = "${{ matrix.color }}"
+          logo = Image.open("logo-1024.png").convert("RGBA")
+          def put(canvas, size):
+              l = logo.resize((size, size), Image.LANCZOS)
+              canvas.paste(l, ((canvas.width - size) // 2, (canvas.height - size) // 2), l)
+              return canvas
+          icon = put(Image.new("RGBA", (1024, 1024), "white"), 940)
+          if tag:
+              d = ImageDraw.Draw(icon)
+              d.rectangle([0, 800, 1024, 1024], fill=color)
+              f = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 130)
+              w = d.textlength(tag, font=f)
+              d.text(((1024 - w) / 2, 830), tag, font=f, fill="white")
+          icon.convert("RGB").save("app/assets/icon-only.png")
+          put(Image.new("RGBA", (1024, 1024), (0, 0, 0, 0)), 640).save("app/assets/icon-foreground.png")
+          Image.new("RGB", (1024, 1024), color if tag else "white").save("app/assets/icon-background.png")
+          for name, bg in (("splash", "#ffffff"), ("splash-dark", "#0f1a13")):
+              put(Image.new("RGBA", (2732, 2732), bg), 760).convert("RGB").save("app/assets/" + name + ".png")
+          PY
+          cd app
+          npx @capacitor/assets generate --android
+      - name: Add Firebase and build the APK
+        run: |
+          cd app
+          cp ../google-services.json android/app/google-services.json
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.key }}-apk
+          path: app/android/app/build/outputs/apk/debug/app-debug.apk
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+      - name: Rename the APKs
+        run: |
+          mkdir apk
+          cp out/customer-apk/app-debug.apk apk/KachaBazaar-Customer.apk
+          cp out/admin-apk/app-debug.apk apk/KachaBazaar-Admin.apk
+          cp out/rider-apk/app-debug.apk apk/KachaBazaar-Rider.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: APKs build ${{ github.run_number }}
+          files: apk/*.apk

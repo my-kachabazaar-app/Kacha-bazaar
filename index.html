@@ -109,6 +109,7 @@ body{position:relative}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="push.js"></script>
 <script>
 /* ===== Edit these values ===== */
 const firebaseConfig={apiKey:"AIzaSyCNPi7mLkWMz1kGo3b2YXstjM65wbB0ZLw",authDomain:"kacha-bazaar-7fda3.firebaseapp.com",projectId:"kacha-bazaar-7fda3",appId:"1:117258766044:web:95ece03ae97604d7efd619"};
@@ -149,7 +150,7 @@ async function boot(u){
 const d=await db.collection("users").doc(u.uid).get();
 if(!d.exists){alert("Profile not found");return auth.signOut()}
 if(d.data().role!="customer"){alert("This is the customer app. Staff: please use your admin or rider link.");return auth.signOut()}
-me=Object.assign({uid:u.uid},d.data());wish=me.wish||[];showAuth=false;tab=after||"home";after="";
+me=Object.assign({uid:u.uid},d.data());wish=me.wish||[];window.kbPush&&kbPush(db,u.uid,me.role);showAuth=false;tab=after||"home";after="";
 const O=db.collection("orders");
 if(me.role=="customer")listen(O.where("uid","==",me.uid),a=>orders=a);
 if(window.Notification&&Notification.permission==="default")Notification.requestPermission();

@@ -90,6 +90,7 @@ body{position:relative}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="push.js"></script>
 <script>
 /* ===== Edit these values ===== */
 const firebaseConfig={apiKey:"AIzaSyCNPi7mLkWMz1kGo3b2YXstjM65wbB0ZLw",authDomain:"kacha-bazaar-7fda3.firebaseapp.com",projectId:"kacha-bazaar-7fda3",appId:"1:117258766044:web:95ece03ae97604d7efd619"};
@@ -144,7 +145,7 @@ if(d.data().role!="rider"){alert("This is the rider site. Please use a rider acc
 me=Object.assign({uid:u.uid},d.data());
 if(!u.emailVerified){scr="ver";return render(true)}
 if(!me.approved){scr=me.kyc=="submitted"?"wait":"kyc";return render(true)}
-tab="home";sub="";
+tab="home";sub="";window.kbPush&&kbPush(db,me.uid,me.role);
 unsubs.push(db.collection("settings").doc("rider").onSnapshot(x=>{cfg=x.exists?x.data():{};soft()},()=>{}));
 listen(db.collection("orders").where("riderId","==",me.uid),a=>orders=a,"A new order was assigned to you!");
 listen(db.collection("tickets").where("riderId","==",me.uid),a=>tickets=a);
