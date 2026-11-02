@@ -14,7 +14,7 @@
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI","Noto Sans Bengali",sans-serif}
 #top{position:sticky;top:0;background:var(--bg);padding:10px 14px 6px;z-index:5}
 .tabs{display:flex;gap:6px;margin-top:8px}
-.tabs button{flex:1;padding:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit}
+.tabs{overflow-x:auto}.tabs button{flex:0 0 auto;padding:9px 12px;padding:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit}
 .tabs button.on{background:var(--pr);color:#fff;border-color:var(--pr)}
 main{padding:4px 14px 40px;max-width:760px;margin:auto}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
@@ -68,6 +68,37 @@ body{position:relative}
 .oc{background:linear-gradient(rgba(255,255,255,.84),rgba(255,255,255,.84)),url(store-bg.jpg) center/cover}
 @media (prefers-color-scheme:dark){.oc{background:linear-gradient(rgba(32,29,43,.9),rgba(32,29,43,.9)),url(store-bg.jpg) center/cover}}
 .th{display:flex;gap:8px}.th>div{width:58px;height:58px;background:#fff;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}.th img{width:100%;height:100%;object-fit:cover}.th .em{font-size:28px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes flt{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-12px) rotate(4deg)}}
+@keyframes drift{from{transform:translateX(-30px)}to{transform:translateX(30px)}}
+#app.go>*{animation:fadeUp .45s both}#app.go>*:nth-child(2){animation-delay:.05s}#app.go>*:nth-child(3){animation-delay:.1s}#app.go>*:nth-child(4){animation-delay:.15s}#app.go>*:nth-child(5){animation-delay:.2s}#app.go>*:nth-child(6){animation-delay:.25s}
+.card,.pc,.kcard{transition:transform .2s,box-shadow .2s}.pc:hover,.kcard:hover,.card.oc2:hover{transform:translateY(-3px);box-shadow:0 8px 20px #0001}
+.b,.add,.qty button,.qty2 button,#nav button,.cta,.chev,.bk{transition:transform .12s}.b:active,.add:active,.qty button:active,.qty2 button:active,#nav button:active,.cta:active,.chev:active,.bk:active{transform:scale(.94)}
+#nav button.on span{display:inline-block;animation:pop .35s}.hz:active{animation:pop .3s}
+.hero{position:relative;margin:-4px -14px 0;height:280px;border-radius:0 0 34px 34px;overflow:hidden;background:linear-gradient(160deg,#d7f5df,#8fe0a8 60%,#5cc983)}
+.cl1,.cl2{position:absolute;background:#fff;border-radius:99px;opacity:.85;height:42px;width:120px;animation:drift 7s ease-in-out infinite alternate}.cl1{top:44px;left:12px}.cl2{top:130px;right:-20px;width:150px;animation-duration:9s}
+.hl{position:absolute;left:50%;top:74px;margin-left:-80px;width:160px;height:160px;border-radius:50%;background:#fff;box-shadow:0 10px 30px #0002;animation:flt 3.5s ease-in-out infinite}.hl img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.fl{position:absolute;font-size:36px;animation:flt 4s ease-in-out infinite}.f1{left:10%;top:70px}.f2{right:10%;top:60px;animation-delay:.6s}.f3{left:16%;bottom:26px;animation-delay:1.2s}.f4{right:16%;bottom:30px;animation-delay:.3s}
+.skip{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;background:#fff;color:var(--pr);border:0;border-radius:14px;padding:12px 24px;font:inherit;font-weight:700;z-index:2}
+.ttl{font-size:26px;font-weight:800;margin:22px 0 18px}.ttl span{color:var(--pr)}
+.pin{display:flex;align-items:center;gap:10px;border:1.5px solid var(--bd);border-radius:16px;padding:0 14px;background:var(--card);margin-bottom:10px;transition:border-color .2s}.pin:focus-within{border-color:var(--pr)}.pin>span{font-size:18px;font-weight:600}.pin input{border:0;background:none;margin:0;padding:16px 0;font-size:18px;outline:0}.pin.ro{background:var(--bg)}
+.cta{display:block;width:100%;border:0;border-radius:16px;padding:18px;font:inherit;font-size:18px;font-weight:700;background:var(--pr);color:#fff;margin-top:14px}.cta:disabled{background:#e9ecf1;color:#8b93a1}.cta.l{background:none;color:var(--pr);margin-top:4px}
+.ph{display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--bg);z-index:5;padding:10px 0;margin-bottom:6px}.ph .tt{flex:1}.ph b{font-size:20px}.bk{width:44px;height:44px;border-radius:50%;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:22px;padding:0;flex:none}
+.oc2{padding:0;overflow:hidden}.oc2 .t{padding:14px}.th2{display:flex;gap:10px;padding:0 14px 14px;overflow-x:auto}.th2>div{width:62px;height:62px;border:1px solid var(--bd);border-radius:12px;overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;background:#fff}.th2 img{width:100%;height:100%;object-fit:cover}.th2 .em{font-size:30px}
+.oc2 .ag{display:block;width:100%;text-align:center;padding:14px;color:var(--pr);font:inherit;font-weight:700;border:0;border-top:1px solid var(--bd);background:none}
+.ok{display:inline-flex;width:22px;height:22px;border-radius:50%;background:#1faa6b;color:#fff;align-items:center;justify-content:center;font-size:13px;margin-left:6px;animation:pop .4s}.ok.x{background:#9aa0ad}.ok.w{background:#f5a524}
+.chev{width:40px;height:40px;border-radius:50%;border:1px solid var(--bd);background:none;color:var(--tx);font-size:18px;padding:0}
+.ds{display:flex;align-items:center;gap:12px}.dk{width:52px;height:52px;border-radius:14px;background:#d9f5e6;color:#1faa6b;display:flex;align-items:center;justify-content:center;font-size:28px;animation:pop .5s}.arr{background:#e9f7ee;color:var(--pr);border-radius:8px;padding:4px 10px;font-weight:800;font-size:14px}
+.fixb{position:fixed;left:0;right:0;bottom:calc(70px + env(safe-area-inset-bottom,0px));padding:10px 14px;background:linear-gradient(#0000,var(--bg) 35%);z-index:9}.fixb .cta{max-width:760px;margin:0 auto}
+.sv{background:#e3f6e8;color:#12703f;text-align:center;padding:10px;margin:0 -14px 10px}
+.ci2{display:flex;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--bd)}.ci2 img,.ci2 .em{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none;font-size:34px;line-height:64px;text-align:center;background:#f1f5f2}
+.qty2{display:inline-flex;align-items:center;gap:8px;background:#e8f6ec;border-radius:10px;padding:4px 8px;font-weight:700;color:var(--pr)}.qty2 button{border:0;background:none;color:var(--pr);font-size:20px;font-weight:800;padding:2px 6px}
+.fr{color:#1faa6b;font-weight:800}.svc{background:#e3f6e8;color:#1d1b26;border-radius:16px;padding:14px;margin-bottom:10px}.svc .in{background:#fff;border-radius:12px;padding:10px 12px}
+.fld{position:relative}.fld label{position:absolute;top:-10px;left:14px;background:var(--card);padding:0 6px;font-size:13px}.fld input{border:1.5px solid var(--tx);border-radius:16px;padding:18px 14px;font-size:18px;margin:0}
+.etl{margin-top:6px;font-size:13px;color:var(--pr)}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#1d1b26;color:#fff;padding:10px 18px;border-radius:99px;z-index:99;animation:fadeUp .3s}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -82,10 +113,10 @@ body{position:relative}
 /* ===== Edit these values ===== */
 const firebaseConfig={apiKey:"AIzaSyCNPi7mLkWMz1kGo3b2YXstjM65wbB0ZLw",authDomain:"kacha-bazaar-7fda3.firebaseapp.com",projectId:"kacha-bazaar-7fda3",appId:"1:117258766044:web:95ece03ae97604d7efd619"};
 const STORE="Kacha Bazaar";
-const UPI_ID="yourname@upi";
-const SUPPORT_PHONE="";
-const SUPPORT_EMAIL="";
-const DELIVERY_FEE=30,TAX_PCT=5;
+let UPI_ID="yourname@upi";
+let SUPPORT_PHONE="";
+let SUPPORT_EMAIL="";
+let DELIVERY_FEE=30,TAX_PCT=5;
 /* ========================================= */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -117,25 +148,26 @@ db.collection("products").onSnapshot(s=>{products=s.docs.map(d=>Object.assign({i
 async function boot(u){
 const d=await db.collection("users").doc(u.uid).get();
 if(!d.exists){alert("Profile not found");return auth.signOut()}
-me=Object.assign({uid:u.uid},d.data());wish=me.wish||[];showAuth=false;tab=me.role=="admin"?"orders":me.role=="rider"?"rider":(after||"home");after="";
+if(d.data().role!="customer"){alert("This is the customer app. Staff: please use your admin or rider link.");return auth.signOut()}
+me=Object.assign({uid:u.uid},d.data());wish=me.wish||[];showAuth=false;tab=after||"home";after="";
 const O=db.collection("orders");
 if(me.role=="customer")listen(O.where("uid","==",me.uid),a=>orders=a);
-if(me.role=="admin"){listen(O,a=>orders=a,"New order received!");listen(db.collection("users").where("role","==","rider"),a=>riders=a)}
-if(me.role=="rider")listen(O.where("riderId","==",me.uid),a=>orders=a,"A new order was assigned to you!");
 if(window.Notification&&Notification.permission==="default")Notification.requestPermission();
 render(true)}
 
 function authV(){
-const B=(t,f,c)=>`<button class="b w ${c||""}" onclick="${f}">${t}</button>`;
-const pin=(id,ph)=>`<input id="${id}" type="password" inputmode="numeric" maxlength="4" placeholder="${ph}">`;
-let h='<div class="card stack">';
-if(scr=="id")h+=`<h2>Login</h2><input id="ix" placeholder="Mobile number or email" value="${esc(ctx.id||"")}">`+B("Continue","next()");
-else if(scr=="pin")h+=`<h2>Enter your 4-digit password</h2><div class="mu">${esc(ctx.id)}</div>${pin("pn","••••")}`+B("Login","login()")+B("Forgot password?","forgot()","l")+B("Use another number/email","scr='id';render(true)","l");
-else if(scr=="new")h+=`<h2>Create account</h2><div class="mu">No account found. Fill in the details below to create one.</div><input id="nm" placeholder="Name"><input id="ph" type="tel" placeholder="Mobile number (10 digits)" value="${esc(ctx.ph||"")}"><input id="em" type="email" placeholder="Email" value="${esc(ctx.em||"")}"><select id="rl"><option value="customer">I am a customer</option><option value="rider">I am a rider</option></select>${pin("p1","New 4-digit password")}${pin("p2","Re-enter password")}`+B("Create account","signup()")+B("Back","scr='id';render(true)","l");
-else if(scr=="verify")h+=`<h2>Verify your email</h2><p>${esc(ctx.email)} — a verification link has been sent to this address (check Spam if you can't find it). Click the link, then come back and tap the button below.</p>`+B("I have verified","chk()")+B("Resend link","resend()","l")+B("Logout","auth.signOut()","l");
-else if(scr=="forgot")h+=`<h2>Change password</h2><p>${esc(ctx.email)} — a link has been sent to this address. Click it to set a new 4-digit password.</p>`+B("Back to login","scr='id';render(true)","l");
-else if(scr=="newpin")h+=`<h2>New 4-digit password</h2>${pin("p1","New password")}${pin("p2","Re-enter password")}`+B("Save","setPin()");
-return h+"</div>"}
+const F=(ic,inner)=>`<div class="pin"><span>${ic}</span>${inner}</div>`;
+const pin=(id,ph)=>F("🔒",`<input id="${id}" type="password" inputmode="numeric" maxlength="4" placeholder="${ph}">`);
+const C=(t,f)=>`<button class="cta" onclick="${f}">${t}</button>`;
+const G=(t,f)=>`<button class="cta l" onclick="${f}">${t}</button>`;
+let h='<div class="hero"><button class="skip" onclick="showAuth=false;render(true)">Skip</button><i class="cl1"></i><i class="cl2"></i><div class="fl f1">🥦</div><div class="fl f2">🍅</div><div class="fl f3">🥛</div><div class="fl f4">🍎</div><div class="hl"><img src="logo.png" alt=""></div></div>';
+if(scr=="id")h+=`<div class="ttl">Groceries delivered in <span>minutes</span></div>`+F("+91",`<input id="ix" type="tel" inputmode="numeric" maxlength="10" placeholder="Enter Phone Number" value="${esc(ctx.ph0||"")}" oninput="this.value=this.value.replace(/\\D/g,'');ctx.ph0=this.value;document.getElementById('go').disabled=this.value.length!=10">`)+`<button id="go" class="cta" ${(ctx.ph0||"").length==10?"":"disabled"} onclick="next()">Continue</button><p class="mu" style="text-align:center;margin-top:18px">By continuing, you agree to our<br><b style="color:var(--pr)">Terms of Use</b> &amp; <b style="color:var(--pr)">Privacy Policy</b></p>`;
+else if(scr=="pin")h+=`<div class="ttl">Welcome <span>back</span></div><div class="mu" style="margin:-8px 0 12px">+91 ${esc(ctx.id)}</div>`+pin("pn","Enter 4-digit password")+C("Login","login()")+G("Forgot password?","forgot()")+G("Use another number","scr='id';render(true)");
+else if(scr=="new")h+=`<div class="ttl">Create your <span>account</span></div>`+F("👤",`<input id="nm" placeholder="Name">`)+F("+91",`<input id="ph" type="tel" inputmode="numeric" maxlength="10" placeholder="Phone number" value="${esc(ctx.ph||"")}">`)+F("✉️",`<input id="em" type="email" placeholder="Email" value="${esc(ctx.em||"")}">`)+pin("p1","New 4-digit password")+pin("p2","Re-enter password")+C("Create account","signup()")+G("Back","scr='id';render(true)");
+else if(scr=="verify")h+=`<div class="ttl">Verify your <span>email</span></div><p>${esc(ctx.email)} — a verification link has been sent to this address (check Spam if you can't find it). Click the link, then come back and tap the button below.</p>`+C("I have verified","chk()")+G("Resend link","resend()")+G("Logout","auth.signOut()");
+else if(scr=="forgot")h+=`<div class="ttl">Change <span>password</span></div><p>${esc(ctx.email)} — a link has been sent to this address. Click it to set a new 4-digit password.</p>`+G("Back to login","scr='id';render(true)");
+else if(scr=="newpin")h+=`<div class="ttl">New 4-digit <span>password</span></div>`+pin("p1","New password")+pin("p2","Re-enter password")+C("Save","setPin()");
+return h}
 async function next(){const k=normId($("#ix").value);if(!k)return alert("Enter a valid mobile number or email");
 try{const d=await db.collection("lookup").doc(k).get();ctx.id=$("#ix").value.trim();
 if(d.exists){ctx.email=d.data().email;scr="pin"}else{scr="new";ctx.em=k.includes("@")?k:"";ctx.ph=k.includes("@")?"":k}
@@ -149,7 +181,7 @@ if(!isPin(p)||p!=$("#p2").value)return alert("Enter the same 4 digits twice");
 try{signing=true;
 for(const k of [ph,em])if((await db.collection("lookup").doc(k).get()).exists)throw new Error("An account already exists for this mobile or email. Please log in.");
 const u=(await auth.createUserWithEmailAndPassword(em,pw(p))).user;
-await db.collection("users").doc(u.uid).set({name:nm,phone:ph,email:em,role:$("#rl").value,available:false});
+await db.collection("users").doc(u.uid).set({name:nm,phone:ph,email:em,role:"customer",available:false});
 await db.collection("lookup").doc(ph).set({email:em,uid:u.uid});
 await db.collection("lookup").doc(em).set({email:em,uid:u.uid});
 signing=false;route(u)
@@ -169,6 +201,7 @@ const free=r=>r.available&&!busy(r);
 
 const CATS=[["Vegetables & Fruits","🥦","#f7c6cc"],["Fresh Meat & Seafood","🍗","#f7c6cc"],["Dairy & Eggs","🥛","#bfdcf7"],["Bakery & Biscuits","🍞","#f6dcc2"],["Snacks & Munchies","🍪","#fde3a7"],["Cold Drinks & Juices","🥤","#cdebc3"],["Atta, Rice & Dals","🌾","#eadfcd"],["Masalas & Oils","🌶️","#f6d3b3"],["Personal Care","🧴","#c4ecee"],["Household Essentials","🧽","#c5e1f7"]];
 try{wish=JSON.parse(localStorage.getItem("qd_wish")||"[]")}catch(e){}
+db.collection("settings").doc("store").onSnapshot(d=>{const c=d.data()||{};if(c.deliveryFee!=null)DELIVERY_FEE=+c.deliveryFee;if(c.taxPct!=null)TAX_PCT=+c.taxPct;if(c.upiId)UPI_ID=c.upiId;if(c.supportPhone)SUPPORT_PHONE=c.supportPhone;if(c.supportEmail)SUPPORT_EMAIL=c.supportEmail;soft()},e=>console.log(e.message));
 db.collection("categories").onSnapshot(x=>{catImg={};x.forEach(d=>catImg[d.id]=d.data().img);soft()},e=>console.log(e.message));
 const BAN=[["Fresh Vegetables","Farm fresh, delivered fast","🥬","Vegetables & Fruits","#d9f0d2"],["Daily Essentials","Milk, eggs, bread & more","🥛","Dairy & Eggs","#d6e9fb"],["Weekend Specials","Stock up on snacks","🧺","Snacks & Munchies","#fdeec4"]];
 const LOGO='<span style="color:var(--pr)">Kacha</span> <span style="color:#e8801a">Bazaar</span>';
@@ -188,15 +221,15 @@ const secHd=(t,k)=>`<div class="row"><h2>${t}</h2><button class="va" onclick="op
 function listV(){const s=SECS.find(x=>x[0]==lst),k=lst.startsWith("cat:"),r=lst=="all"?live():k?live().filter(p=>p.cat==lst.slice(4)):live().filter(p=>inSec(p,lst));
 return `<button class="b l" onclick="tab='home';render(true)">← Back</button><h2>${esc(k?lst.slice(4):s?s[1]:"All Products")}</h2>`+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No products here yet.</p>')}
 const hdr=()=>`<div class="row hd"><button class="pb" onclick="${me?"tab='prof';render(true)":loginTo("prof")}"><img src="logo.png" alt="Profile"></button><b class="logo">${LOGO}</b><button class="hz2" onclick="tab='wish';render(true)">❤️</button>${me?`<span class="mu">Hi, ${esc(me.name.split(" ")[0])}</span>`:`<button class="b l" onclick="${loginTo("")}">Login/Register</button>`}</div>`;
-const soon=()=>alert("Coming soon");
+const soon=()=>toast("Coming soon");
 async function editP(){const n=prompt("Your name",me.name);if(n===null||!n.trim())return;me.name=n.trim();try{await db.collection("users").doc(me.uid).update({name:me.name})}catch(e){alert(e.message)}render(true)}
 async function editA(){const n=prompt("Delivery address",me.addr||"");if(n===null)return;me.addr=n.trim();try{await db.collection("users").doc(me.uid).update({addr:me.addr})}catch(e){alert(e.message)}render(true)}
 function profV(){
 const I=(ic,t,sub,fn)=>`<div class="pi" onclick="${fn}"><span>${ic}</span><div><div>${t}</div>${sub?`<div class="mu s2">${sub}</div>`:""}</div><span class="mu">›</span></div>`;
-return `<div class="av"><div class="avc">${esc((me.name||"?")[0].toUpperCase())}</div><a href="#" onclick="editP();return false">Edit Profile</a><div class="mu s2">${esc(me.phone)} · ${esc(me.email||"")}</div></div>
+return `<div class="av"><div class="avc">${esc((me.name||"?")[0].toUpperCase())}</div><a href="#" onclick="tab='editp';render(true);return false">Edit Profile</a><div class="mu s2">${esc(me.phone)} · ${esc(me.email||"")}</div></div>
 <div class="tl"><div onclick="tab='orders';render(true)">🛍<br>Your Orders</div><div onclick="soon()">💳<br>Kacha Cash</div><div onclick="tab='wish';render(true)">♡<br>Your Wishlist</div></div>
 <div class="card kc stack" onclick="soon()"><div class="row"><b>👛 Kacha Cash &amp; Gift Card</b><span>›</span></div><div class="row"><span>Available Balance ₹0</span><button class="b l">Add Balance</button></div></div>
-<h2>Profile Information</h2><div class="card pl">${I("⭐","Rewards &amp; Earn","","soon()")}${I("📍","Saved Addresses",me.addr?"1 Address":"None","editA()")}${I("💳","Payments","","soon()")}${I("👤","Profile Details",esc(me.name),"editP()")}</div>
+<h2>Profile Information</h2><div class="card pl">${I("⭐","Rewards &amp; Earn","","soon()")}${I("📍","Saved Addresses",me.addr?"1 Address":"None","editA()")}${I("💳","Payments","","soon()")}${I("👤","Profile Details",esc(me.name),"tab='editp';render(true)")}</div>
 <h2>More Options</h2><div class="card pl">${I("💬","Help &amp; Support","","tab='help';render(true)")}${I("☆","Suggest Products","","soon()")}${I("ℹ️","General Info","","alert('${STORE} - fresh groceries delivered fast.')")}</div>
 <button class="b l w" onclick="auth.signOut()">Log Out</button>`}
 function resV(){
@@ -215,24 +248,28 @@ function needLogin(t){after=t;showAuth=true;scr="id";render(true)}
 async function chAddr(){const n=prompt("Delivery address",addrNow());if(n===null)return;gAddr=n.trim();if(me){me.addr=gAddr;try{await db.collection("users").doc(me.uid).update({addr:gAddr})}catch(e){alert(e.message)}}render(true)}
 function rmI(id){delete cart[id];render(true)}
 function goCheckout(){if(!me)return needLogin("checkout");tab="checkout";render(true);scrollTo(0,0)}
+function savings(){let n=0;Object.keys(cart).forEach(id=>{const p=products.find(x=>x.id==id);if(p&&p.mrp>p.price)n+=(p.mrp-p.price)*cart[id]});return n}
 function cartV(){
 const ids=Object.keys(cart).filter(id=>products.some(p=>p.id==id));
-if(!ids.length)return '<h2>🛒 Your Cart</h2><p class="mu">Your cart is empty.</p>';
-const t=tots(),ad=addrNow();
-let h=`<div class="card row">📍 <span style="flex:1">Delivering to: ${ad?esc(ad):"add your address"}</span><a href="#" onclick="chAddr();return false">(Change)</a></div><div class="row"><h2>🛒 Your Cart</h2><span class="tag">${cnt()} Items</span></div>`;
-ids.forEach(id=>{const p=products.find(x=>x.id==id);h+=`<div class="card ci">${img(p)}<div style="flex:1"><b>${esc(p.name)}</b><div class="mu s2">${esc(p.cat||"")}</div><b style="color:var(--pr)">₹${p.price}</b></div><span class="qty"><button onclick="dec('${id}')">−</button>${cart[id]}<button onclick="add('${id}')">+</button></span><button class="va" onclick="rmI('${id}')">🗑</button></div>`});
-h+=`<div class="card row"><div><b>📍 Delivery Address</b><div class="mu">${ad?esc(ad):"No address yet"}</div></div><button class="b l" onclick="chAddr()">✏️ Change</button></div>
-<div class="card stack"><b>🧾 Bill Details</b><div class="row"><span>Item Total</span><span>₹${t.sub}</span></div><div class="row"><span>Delivery Fee</span><span>₹${t.fee}</span></div><div class="row"><span>Taxes &amp; Charges (GST)</span><span>₹${t.tax}</span></div><div class="row bt"><b>Final Total Amount</b><b>₹${t.tot}</b></div></div>`;
+if(!ids.length)return pgHd("Cart")+'<div class="card" style="text-align:center;padding:40px 10px"><div style="font-size:54px;animation:flt 3s infinite">🛒</div><h2>Your cart is empty</h2><p class="mu">Add some fresh groceries to get started.</p><button class="b" onclick="tab=\'home\';render(true)">Start shopping</button></div>';
+const t=tots(),ad=addrNow(),sv=savings(),mrpT=ids.reduce((a,id)=>{const p=products.find(x=>x.id==id);return a+(p.mrp>p.price?p.mrp:p.price)*cart[id]},0);
+let h=pgHd("Cart",`<button class="bk" onclick="tab='wish';render(true)">🤍</button>`)+(sv?`<div class="sv">Yay! You saved <b>₹${sv}</b> on this order</div>`:"");
+if(ad)h+=`<div class="card row" onclick="chAddr()">📍 <span style="flex:1">${esc(ad)}</span><span class="mu">Change</span></div>`;
+h+=`<div class="card"><b style="font-size:18px">Coupons &amp; offers</b><div class="row" style="margin-top:10px" onclick="soon()"><span>🏷️ View coupons</span><span class="mu">›</span></div></div>`;
+h+=`<div class="card"><div class="row"><div class="row" style="gap:12px;justify-content:flex-start"><span style="font-size:28px">⏱️</span><span><b style="font-size:18px">${cnt()} item${cnt()>1?"s":""} in your cart</b></span></div><button class="b l" onclick="soon()">📅 Schedule</button></div>`+ids.map(id=>{const p=products.find(x=>x.id==id);return `<div class="ci2">${img(p)}<div style="flex:1"><div>${esc(p.name)}</div><div class="mu s2">${esc(p.cat||"")}</div></div><div style="text-align:right"><span class="qty2"><button onclick="dec('${id}')">−</button>${cart[id]}<button onclick="add('${id}')">+</button></span><div style="margin-top:6px">${p.mrp>p.price?`<s class="mu">₹${p.mrp*cart[id]}</s> `:""}<b class="fr">₹${p.price*cart[id]}</b></div></div></div>`}).join("")+`<div class="row" style="justify-content:center;padding-top:12px">Forgot something? <a href="#" onclick="tab='home';render(true);return false" style="margin-left:6px;color:var(--pr);font-weight:700">Add More Items</a></div></div>`;
 const more=live().filter(p=>!cart[p.id]).slice(0,8);
-if(more.length)h+=secHd("Add More Products","all")+`<div class="hs">${more.map(card).join("")}</div>`;
-return h+`<button class="b w" onclick="goCheckout()">Proceed to Checkout ›</button>`}
+if(more.length)h+=`<div class="card"><b style="font-size:20px">You may also like</b><p class="mu s2">Add a quick item before you check out!</p><div class="hs">${more.map(card).join("")}</div></div>`;
+const full=mrpT+t.fee+t.tax;
+h+=`<div class="card stack"><b>🧾 Bill Details</b><div class="row"><span>Item Total</span><span>${mrpT>t.sub?`<s class="mu">₹${mrpT}</s> `:""}₹${t.sub}</span></div><div class="row"><span>Delivery Fee</span><span>${t.fee?"₹"+t.fee:'<span class="fr">FREE</span>'}</span></div>${t.tax?`<div class="row"><span>Taxes &amp; Charges (GST)</span><span>₹${t.tax}</span></div>`:""}<div style="border-top:1px solid var(--bd)"></div><div class="row" style="font-size:20px"><b>To Pay</b><span>${full>t.tot?`<s class="mu" style="font-size:15px">₹${full}</s> `:""}<b>₹${t.tot}</b></span></div></div>`;
+if(sv)h+=`<div class="svc"><div class="row"><b style="font-size:18px">Savings on this order</b><span class="tag s-delivered" style="font-size:16px">₹${sv}</span></div><div class="in" style="margin-top:10px"><div class="row"><span>% Discount on MRP</span><b>₹${sv}</b></div></div></div>`;
+return h+`<div style="height:80px"></div><div class="fixb"><button class="cta" onclick="${ad?"goCheckout()":"chAddr().then(()=>{if(addrNow())goCheckout()})"}">${ad?"Proceed to Checkout":"Select Address"}</button></div>`}
 function checkoutV(){const t=tots();if(!t.sub)return cartV();
-let h=`<button class="b l" onclick="tab='cart';render(true)">← Back to cart</button><h2>Checkout</h2><div class="card stack"><div class="row"><b>Amount to pay</b><b>₹${t.tot}</b></div><input id="cn" placeholder="Name" value="${esc(me.name)}"><input id="cp" type="tel" placeholder="Phone" value="${esc(me.phone)}"><input id="ca" placeholder="Delivery address" value="${esc(addrNow())}"><select onchange="pay=this.value;render(true)"><option value="cod">Cash on Delivery</option><option value="upi" ${pay=="upi"?"selected":""}>UPI</option></select>`;
+let h=`${pgHd("Checkout","","tab='cart';render(true)")}<div class="card stack"><div class="row"><b>Amount to pay</b><b>₹${t.tot}</b></div><input id="cn" placeholder="Name" value="${esc(me.name)}"><input id="cp" type="tel" placeholder="Phone" value="${esc(me.phone)}"><input id="ca" placeholder="Delivery address" value="${esc(addrNow())}"><select onchange="pay=this.value;render(true)"><option value="cod">Cash on Delivery</option><option value="upi" ${pay=="upi"?"selected":""}>UPI</option></select>`;
 if(pay=="upi")h+=`<div class="mu">UPI ID: <b>${esc(UPI_ID)}</b></div><a class="b" href="upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(STORE)}&am=${t.tot}&cu=INR">Pay ₹${t.tot} in UPI app</a><input id="cu" placeholder="UTR / transaction number after payment">`;
 return h+'<button class="b w" onclick="place()">Place order</button></div>'}
 const wishV=()=>{const r=live().filter(p=>wish.includes(p.id));return `<h2>❤️ My Wishlist</h2>`+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No wishlisted products yet. Tap the heart on any product.</p>')};
 function toggleW(id){wish=wish.includes(id)?wish.filter(x=>x!=id):wish.concat(id);if(me)db.collection("users").doc(me.uid).update({wish}).catch(e=>alert(e.message));else try{localStorage.setItem("qd_wish",JSON.stringify(wish))}catch(e){}render(true)}
-const loginP=t=>`<h2>Orders</h2><div class="card stack"><p>Please log in to ${t}.</p><button class="b w" onclick="${loginTo("orders")}">Login/Register</button></div>`;
+const loginP=t=>pgHd("Your Orders")+`<div class="card stack"><p>Please log in to ${t}.</p><button class="b w" onclick="${loginTo("orders")}">Login/Register</button></div>`;
 const FAQ=[["Frequently Asked Questions (FAQs)","❓","Add products to the cart, choose Cash on Delivery or UPI and place your order. A rider collects it from the store and delivers it to you."],["Returns &amp; Refunds","↩️","If something is wrong with your order, contact support with your order number."],["Delivery Status &amp; Fees","🚚","Open the Order tab and tap Track Order to see the status. Delivery fee and GST are shown in your cart bill."],["Offers &amp; Payments","💳","We accept Cash on Delivery and UPI. For UPI, pay first and enter the transaction number at checkout."],["Account &amp; Login","👤","Log in with your mobile number or email and your 4-digit password. Use Forgot password? to set a new one."],["Feedback &amp; Suggestions","💬","Tell us what to improve or which products to add through support."]];
 function helpV(){const o=orders.slice().sort(byTime)[0],ph=SUPPORT_PHONE.replace(/\D/g,"");
 const C=(ic,t,sub,href,tg)=>`<a class="pi" ${href?`href="${href}"`:""} style="text-decoration:none;color:inherit"><span>${ic}</span><div>${t}<div class="mu s2">${sub}</div></div>${tg?`<span class="tag s-delivered">${tg}</span>`:""}</a>`;
@@ -251,58 +288,46 @@ try{await db.collection("orders").add({uid:me.uid,name:n,phone:p,addr:ad,items,t
 const oid=o=>"KB"+o.id.slice(-4).toUpperCase();
 const dt=o=>o.createdAt&&o.createdAt.seconds?new Date(o.createdAt.seconds*1000).toLocaleString([],{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}):"";
 const thumbs=o=>`<div class="th">${o.items.slice(0,4).map(i=>{const p=products.find(x=>x.id==i.id);return `<div>${p?img(p):'<div class="em">📦</div>'}</div>`}).join("")}</div>`;
-function oCard(o){const cur=o.status!="delivered";
-return `<div class="card oc stack"><div class="row"><b>Order #${oid(o)}</b><span class="mu">${cur?(o.status=="pending"?"Placed":"In Progress"):"Delivered"}</span></div><div>Delivery to: ${esc(o.addr)}</div><div class="mu s2">${dt(o)}</div>${thumbs(o)}<div class="row"><span>Total Amount</span><b>₹${o.total}</b></div>${trk[o.id]?`<div class="mu s2">${Object.keys(ST).map(k=>k==o.status?`<b>${ST[k]}</b>`:ST[k]).join(" → ")}</div>`:""}<div class="row">`+(cur?`<button class="b" style="flex:1" onclick="trk['${o.id}']=!trk['${o.id}'];render(true)">Track Order</button><button class="b l" style="flex:1" onclick="detail('${o.id}')">View Details</button>`:`<button class="b l" style="flex:1" onclick="reorder('${o.id}')">Reorder</button><button class="va" onclick="detail('${o.id}')">View Invoice</button>`)+`</div></div>`}
-function myOrdersV(){const L=orders.slice().sort(byTime),c=L.filter(o=>o.status!="delivered"),d=L.filter(o=>o.status=="delivered");
-return `<h2>My Orders</h2><h2>Current Orders</h2>`+(c.map(oCard).join("")||'<p class="mu">No current orders.</p>')+`<h2>Past Orders</h2>`+(d.map(oCard).join("")||'<p class="mu">No past orders.</p>')}
-function detail(id){const o=orders.find(x=>x.id==id);alert(`Order #${oid(o)}\n${dt(o)}\n\n`+o.items.map(i=>`${i.name} x ${i.q} = ₹${i.price*i.q}`).join("\n")+`\n\nItems ₹${o.sub!=null?o.sub:o.total}\nDelivery ₹${o.fee||0}\nGST ₹${o.tax||0}\nTotal ₹${o.total}\nPayment: ${o.pay.toUpperCase()}`)}
+var oSel="",lastKey="";
+const etaOf=o=>o.eta&&o.etaAt?{mins:o.eta,by:new Date(o.etaAt+o.eta*60000).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true}).toLowerCase()}:null;
+const etaLine=o=>{if(o.status=="delivered"||o.status=="cancelled")return "";const e=etaOf(o);return `<div class="etl">⏱ ${e?`Estimated delivery: <b>${e.by}</b> (within ${e.mins} mins)`:"Waiting for store confirmation"}</div>`};
+const pgHd=(t,r,b,sub)=>`<div class="ph"><button class="bk" onclick="${b||"tab='home';render(true)"}">‹</button><div class="tt"><b>${t}</b>${sub?`<div class="mu s2">${sub}</div>`:""}</div>${r||""}</div>`;
+const tm2=t=>new Date(t).toLocaleString([],{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"});
+const ordDate=o=>{if(!(o.createdAt&&o.createdAt.seconds))return "";const d=new Date(o.createdAt.seconds*1000),n=d.getDate(),s=(n%100>10&&n%100<14)||n%10>3?"th":["th","st","nd","rd"][n%10];return `${n}${s} ${d.toLocaleString("en-GB",{month:"short"})} ${d.getFullYear()}, ${d.toLocaleString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true}).toLowerCase()}`};
+const stTxt=o=>({pending:["Order placed","w"],assigned:["Rider assigned","w"],accepted:["Rider heading to store","w"],collected:["Out for delivery","w"],delivered:["Order delivered",""],cancelled:["Order cancelled","x"]}[o.status]||["Order placed","w"]);
+const thumbs2=o=>`<div class="th2">${o.items.map(i=>{const p=products.find(x=>x.id==i.id);return `<div>${p?img(p):'<span style="font-size:26px">📦</span>'}</div>`}).join("")}</div>`;
+function oCard(o){const s=stTxt(o);return `<div class="card oc2"><div class="t row" onclick="openO('${o.id}')"><div><b style="font-size:17px">${s[0]}</b><span class="ok ${s[1]}">${s[1]=="x"?"✕":s[1]=="w"?"•":"✓"}</span><div class="mu s2" style="margin-top:4px">Placed at ${ordDate(o)}</div>${etaLine(o)}</div><span class="row" style="gap:10px"><b style="font-size:18px">₹${o.total}</b><button class="chev">›</button></span></div>${thumbs2(o)}<button class="ag" onclick="reorder('${o.id}')">Order Again</button></div>`}
+function myOrdersV(){const L=orders.slice().sort(byTime);return pgHd("Your Orders")+(L.map(oCard).join("")||'<p class="mu">No orders yet.</p>')}
+function openO(id){oSel=id;tab="odet";render(true);scrollTo(0,0)}
+function toast(m){const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove&&d.remove(),1800)}
+function cp(t){try{navigator.clipboard.writeText("#"+t);toast("Order ID copied")}catch(e){toast("#"+t)}}
+function odetV(){const o=orders.find(x=>x.id==oSel);if(!o)return pgHd("Order","","tab='orders';render(true)")+'<p class="mu">Order not found.</p>';
+const s=stTxt(o),dn=o.status=="delivered",mins=dn&&o.deliveredAt&&o.deliveredAt.seconds&&o.createdAt&&o.createdAt.seconds?Math.max(1,Math.round((o.deliveredAt.seconds-o.createdAt.seconds)/60)):0,n=o.items.reduce((a,i)=>a+i.q,0);
+const row=i=>{const p=products.find(x=>x.id==i.id);return `<div class="ci2">${p?img(p):'<div class="em">📦</div>'}<div style="flex:1"><div>${esc(i.name)}</div><div class="mu s2">${i.q} unit${i.q>1?"s":""}</div></div><div style="text-align:right"><b>₹${i.price*i.q}</b>${p&&p.mrp>i.price?`<div class="mu s2"><s>₹${p.mrp*i.q}</s></div>`:""}</div></div>`};
+const mrpT=o.items.reduce((a,i)=>{const p=products.find(x=>x.id==i.id);return a+((p&&p.mrp>i.price?p.mrp:i.price)*i.q)},0),sub=o.sub!=null?o.sub:o.total;
+return pgHd(`Order #${oid(o)} <button class="va" onclick="cp('${oid(o)}')">⧉</button>`,`<button class="b l" onclick="tab='help';render(true)">💬 Get Help</button>`,"tab='orders';render(true)",`${n} items`)
++`<div class="card"><div class="ds"><div class="dk">${dn?"✓":"⏳"}</div><div style="flex:1"><b style="font-size:22px">${dn?"Delivered":s[0]}</b></div>${mins?`<div style="text-align:right" class="mu">Arrived in<div class="arr">⚡ ${mins} MINS</div></div>`:(!dn&&etaOf(o)?`<div style="text-align:right" class="mu">Arriving by<div class="arr">⚡ ${etaOf(o).by}</div></div>`:"")}</div></div>`
++`<div class="card"><b>${n} items in order</b>${o.items.map(row).join("")}</div>`
++`<div class="card stack"><b>🧾 Bill Summary</b><div class="row"><span>Item Total</span><span>${mrpT>sub?`<s class="mu">₹${mrpT}</s> `:""}₹${sub}</span></div>${o.fee?`<div class="row"><span>Delivery Fee</span><span>₹${o.fee}</span></div>`:""}${o.tax?`<div class="row"><span>Taxes &amp; Charges (GST)</span><span>₹${o.tax}</span></div>`:""}<div class="row" style="font-size:18px"><b>Total Bill</b><b>₹${o.total}</b></div><button class="b l w" onclick="invoice('${o.id}')">Download Invoice</button></div>`
++`<div class="card stack"><b>Order Details</b><div class="mu s2">Order ID</div><div>#${oid(o)}</div><div class="mu s2">Receiver Details</div><div>${esc(o.name)}, +91 ${esc(o.phone)}</div><div class="mu s2">Delivery Address</div><div>${esc(o.addr)}</div><div class="mu s2">Order Placed at</div><div>${dt(o)}</div>${dn&&o.deliveredAt&&o.deliveredAt.seconds?`<div class="mu s2">Order Arrived at</div><div>${tm2(o.deliveredAt.seconds*1000)}</div>`:""}<div class="mu s2">Payment</div><div>${o.pay=="upi"?"UPI":"Cash on Delivery"}</div></div>`
++`<div class="card row" onclick="tab='help';render(true)"><span>💬 <b>Need help with this order?</b><div class="mu s2">Find your issue or reach out</div></span><span class="mu">›</span></div><div style="height:80px"></div><div class="fixb"><button class="cta" onclick="reorder('${o.id}')">Order Again</button></div>`}
+function invoice(id){const o=orders.find(x=>x.id==id),w=window.open("","_blank");if(!w)return alert("Please allow pop-ups to download the invoice.");
+w.document.write(`<title>Invoice #${oid(o)}</title><body style="font-family:sans-serif;max-width:560px;margin:20px auto"><h2>${esc(STORE)}</h2><p>Invoice #${oid(o)}<br>${dt(o)}<br>${esc(o.name)}, ${esc(o.phone)}<br>${esc(o.addr)}</p><table width="100%" cellpadding="6" style="border-collapse:collapse">${o.items.map(i=>`<tr style="border-bottom:1px solid #ddd"><td>${esc(i.name)} × ${i.q}</td><td align="right">₹${i.price*i.q}</td></tr>`).join("")}</table><p align="right">Items ₹${o.sub!=null?o.sub:o.total}<br>Delivery ₹${o.fee||0}<br>GST ₹${o.tax||0}<br><b>Total ₹${o.total}</b><br>Payment: ${o.pay.toUpperCase()}</p><script>window.print()<\/script></body>`);w.document.close()}
+function editV(){return pgHd("Edit Profile","","tab='prof';render(true)")+`<div class="card stack"><div class="fld"><label>Name <b style="color:#e67e22">*</b></label><input id="en" value="${esc(me.name)}"></div><div class="pin ro"><span>+91</span><input value="${esc(me.phone)}" disabled></div><div class="pin ro"><span>✉️</span><input value="${esc(me.email||"")}" disabled></div><div class="mu s2">Your phone number and email are used to log in, so they can't be changed here.</div><button class="cta" style="margin-top:0" onclick="saveP()">Submit</button></div><div style="border-top:2px dashed var(--bd);margin:18px 0"></div><button class="va" style="color:#e53935;font-size:18px" onclick="delAcc()">🗑 Delete Account</button><p class="mu">By proceeding with the account deletion, you agree that all your data associated with the account cannot be retrieved by you. Please refer to our privacy policy for more information on the data deletion.</p>`}
+async function saveP(){const n=$("#en").value.trim();if(!n)return alert("Please enter your name");try{await db.collection("users").doc(me.uid).update({name:n});me.name=n;toast("Profile updated");tab="prof";render(true)}catch(e){alert(e.message)}}
+async function delAcc(){if(!confirm("Delete your account permanently? This cannot be undone."))return;const p=prompt("Enter your 4-digit password to confirm");if(p===null)return;
+try{const u=auth.currentUser;await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,pw(p)));const ph=me.phone,em=me.email||u.email;await db.collection("lookup").doc(ph).delete();await db.collection("lookup").doc(em).delete();await db.collection("users").doc(u.uid).delete();await u.delete();toast("Account deleted")}catch(e){alert(e.code=="auth/wrong-password"||e.code=="auth/invalid-credential"?"Wrong password":e.message)}}
 function reorder(id){const o=orders.find(x=>x.id==id);o.items.forEach(i=>{const p=products.find(x=>x.id==i.id);if(p&&p.stock>0)cart[i.id]=Math.min(p.stock,(cart[i.id]||0)+i.q)});tab="cart";render(true)}
-
-function adminV(){
-if(tab=="cats")return CATS.map((c,i)=>`<div class="card row"><span class="row" style="gap:10px;justify-content:flex-start"><span class="ct s" style="background:${c[2]}">${catPic(i)}</span>${esc(c[0])}</span><span><button class="b l" onclick="setCat(${i})">Image</button>${catImg["c"+i]?` <button class="b l" onclick="clrCat(${i})">Reset</button>`:""}</span></div>`).join("");
-if(tab=="riders")return riders.map(r=>`<div class="card row"><span>${esc(r.name)} · <a href="tel:${esc(r.phone)}">${esc(r.phone)}</a></span><span class="tag">${!r.available?"Offline":busy(r)?"Busy":"Available"}</span></div>`).join("")||'<p class="mu">No riders.</p>';
-if(tab=="products")return `<div class="card stack"><input id="pn" placeholder="Product name"><input id="pp" type="number" placeholder="Price ₹"><input id="ps" type="number" placeholder="Stock"><input id="pi" placeholder="Emoji or image link (optional)"><button class="b l w" onclick="pickP()">📷 Choose photo <span id="pph"></span></button><select id="pc">${CATS.map(c=>`<option>${c[0]}</option>`).join("")}</select><input id="pm" type="number" placeholder="Old price (MRP) ₹, optional">${SECS.map((x,i)=>`<label class="mu"><input id="sf${i}" type="checkbox" style="width:auto"> ${x[1]}</label>`).join("<br>")}<button class="b w" onclick="addP()">Add</button></div>`+products.map(p=>`<div class="card stack"><div class="row"><span>${esc(p.name)} · ₹${p.price} · Stock ${p.stock}</span><span><button class="b l" onclick="setPimg('${p.id}')">Photo</button> <button class="b l" onclick="stk('${p.id}')">Stock</button> <button class="b l" onclick="delP('${p.id}')">Delete</button></span></div><div>${SECS.map(x=>`<button class="chip ${inSec(p,x[0])?"on":""}" onclick="tg('${p.id}','${x[0]}')">${x[1]}</button>`).join("")}</div></div>`).join("");
-return orders.slice().sort(byTime).map(o=>{
-let h=`<div class="card stack"><div class="row"><b>${esc(o.name)} · ₹${o.total}</b>${badge(o)}</div><div class="mu">${itemsT(o)}<br>📍 ${esc(o.addr)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a><br>${o.pay=="upi"?"UPI · UTR: "+esc(o.utr):"Cash on Delivery"}</div>`;
-if(o.status=="pending")h+=`<select id="r${o.id}">${riders.map(r=>`<option value="${r.id}" ${free(r)?"":"disabled"}>${esc(r.name)} (${free(r)?"Available":busy(r)?"Busy":"Offline"})</option>`).join("")||"<option>No riders</option>"}</select><button class="b w" onclick="assign('${o.id}')">Assign rider</button>`;
-else h+=`<div class="mu">Rider: ${esc(o.riderName)}</div>`;
-return h+"</div>"}).join("")||'<p class="mu">No orders.</p>'}
-async function assign(id){const rid=$("#r"+id).value,r=riders.find(x=>x.id==rid);if(!r||!free(r))return alert("No available rider");
-try{await db.collection("orders").doc(id).update({riderId:r.id,riderName:r.name,status:"assigned",assignedAt:TS()})}catch(e){alert(e.message)}}
-async function addP(){const n=$("#pn").value.trim(),p=+$("#pp").value,s=+$("#ps").value,m=+$("#pm").value||0;if(!n||!p||s<0)return alert("Enter name, price and stock");
-try{await db.collection("products").add({name:n,price:p,mrp:m,stock:s,img:pPhoto||$("#pi").value.trim(),cat:$("#pc").value,sec:SECS.filter((x,i)=>$("#sf"+i).checked).map(x=>x[0])});["#pn","#pp","#ps","#pi","#pm"].forEach(x=>$(x).value="");SECS.forEach((x,i)=>$("#sf"+i).checked=false);pPhoto=""}catch(e){alert(e.message)}}
-async function stk(id){const v=prompt("New stock quantity");if(v===null||isNaN(+v))return;db.collection("products").doc(id).update({stock:+v})}
-function tg(id,k){const p=products.find(x=>x.id==id),F=firebase.firestore.FieldValue,on=inSec(p,k),u={sec:on?F.arrayRemove(k):F.arrayUnion(k)};if(k=="featured"&&on)u.featured=false;db.collection("products").doc(id).update(u).catch(e=>alert(e.message))}
-function pickImg(max,cb){const f=document.createElement("input");f.type="file";f.accept="image/*";f.onchange=()=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas"),x=c.getContext("2d");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.75))};im.src=r.result};r.readAsDataURL(f.files[0])};f.click()}
-function pickP(){pickImg(360,d=>{pPhoto=d;$("#pph").textContent="✓"})}
-function setPimg(id){pickImg(360,d=>db.collection("products").doc(id).update({img:d}).catch(e=>alert(e.message)))}
-function setCat(i){pickImg(400,d=>db.collection("categories").doc("c"+i).set({img:d}).catch(e=>alert(e.message)))}
-function clrCat(i){db.collection("categories").doc("c"+i).delete()}
-function delP(id){if(confirm("Delete this product?"))db.collection("products").doc(id).delete()}
-
-function riderV(){
-let h=`<div class="card row"><b>On duty (Available)</b><input type="checkbox" style="width:auto;transform:scale(1.5)" ${me.available?"checked":""} onchange="duty(this.checked)"></div><h2>My deliveries</h2>`;
-const mine=orders.filter(o=>o.status!="delivered").sort(byTime);
-if(!mine.length)h+='<p class="mu">No orders assigned.</p>';
-mine.forEach(o=>{const nx={assigned:["accepted","Accept Order",""],accepted:["collected","Collected from store","g"],collected:["delivered","Delivered to customer","g"]}[o.status];
-h+=`<div class="card stack"><div class="row"><b>${esc(o.name)}</b>${badge(o)}</div><div class="mu">${itemsT(o)}<br>📍 ${esc(o.addr)}<br>📞 <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></div><div><b>${o.pay=="cod"?"Collect cash: ₹"+o.total:"Paid via UPI"}</b></div><button class="b w ${nx[2]}" onclick="setS('${o.id}','${nx[0]}')">${nx[1]}</button></div>`});
-return h}
-function duty(v){me.available=v;db.collection("users").doc(me.uid).update({available:v}).catch(e=>alert(e.message))}
-function setS(id,s){db.collection("orders").doc(id).update({status:s}).catch(e=>alert(e.message))}
 
 function swap(a,html){const k={};a.querySelectorAll("input[id]").forEach(e=>{if(e.type!="password")k[e.id]=e.value});a.innerHTML=html;Object.keys(k).forEach(i=>{const e=document.getElementById(i);if(e&&k[i]!==""&&e.type!="checkbox")e.value=k[i]})}
 function render(force){
 const a=$("#app"),nav=$("#nav");$("#hbg").style.display="none";$("#top").className="";
-if(me&&me.role!="customer"){nav.innerHTML="";
-const tabs=me.role=="admin"?[["orders","Orders"],["products","Products"],["cats","Categories"],["riders","Riders"]]:[];
-$("#top").innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="mu">${esc(me.name)} <button class="b l" onclick="auth.signOut()">Logout</button></span></div>`+(tabs.length?`<div class="tabs">${tabs.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="tab='${t[0]}';render(true)">${t[1]}</button>`).join("")}</div>`:"");
-return swap(a,me.role=="admin"?adminV():riderV())}
-if(showAuth&&!me){nav.innerHTML="";$("#top").innerHTML='<button class="b l" onclick="showAuth=false;render(true)">← Back to shop</button>';return swap(a,authV())}
-$("#top").innerHTML=hdr();$("#top").className=tab=="home"?"h":"";$("#hbg").style.display=tab=="home"?"block":"none";
+const key=[tab,lst,oSel,showAuth,scr,!!me].join();if(key!=lastKey){lastKey=key;a.className="";void a.offsetWidth;a.className="go"}
+if(showAuth&&!me){nav.innerHTML="";$("#top").innerHTML="";return swap(a,authV())}
+const fullPg=["orders","odet","editp","cart","checkout"].includes(tab);$("#top").innerHTML=fullPg?"":hdr();$("#top").className=tab=="home"?"h":"";$("#hbg").style.display=tab=="home"?"block":"none";
 const N=[["home","🏠","Home"],["cat","▦","Category"],["cart","🛒","Cart"],["orders","🛍","Order"],["help","❓","Help"]];
 nav.innerHTML=N.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="tab='${t[0]}';render(true);scrollTo(0,0)"><span>${t[1]}${t[0]=="cart"&&cnt()?`<i>${cnt()}</i>`:""}</span>${t[2]}</button>`).join("");
-swap(a,tab=="cat"?catV():tab=="cart"?cartV():tab=="checkout"?(me?checkoutV():cartV()):tab=="wish"?wishV():tab=="orders"?(me?myOrdersV():loginP("see your orders")):tab=="help"?helpV():tab=="list"?listV():tab=="prof"?(me?profV():homeV()):homeV())}
+swap(a,tab=="cat"?catV():tab=="cart"?cartV():tab=="odet"?odetV():tab=="editp"?(me?editV():homeV()):tab=="checkout"?(me?checkoutV():cartV()):tab=="wish"?wishV():tab=="orders"?(me?myOrdersV():loginP("see your orders")):tab=="help"?helpV():tab=="list"?listV():tab=="prof"?(me?profV():homeV()):homeV())}
 </script>
 </body>
 </html>
-

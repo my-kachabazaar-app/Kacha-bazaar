@@ -80,6 +80,7 @@ body{position:relative}
 .seg{display:flex;gap:6px;margin:8px 0}.seg button{flex:1;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit}.seg button.on{background:var(--pr);color:#fff}
 .wk{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:6px 10px;margin:8px 0}.wk button{border:0;background:none;font-size:26px;color:var(--pr)}
 #pop .pb2{position:fixed;inset:0;background:#0007;z-index:50;display:flex;align-items:flex-end}#pop .pc2{background:var(--bg);color:var(--tx);width:100%;max-height:82vh;overflow:auto;border-radius:20px 20px 0 0;padding:14px}
+.b,.add,#nav button{transition:transform .12s}.b:active,.add:active,#nav button:active{transform:scale(.95)}.card{transition:transform .2s,box-shadow .2s}.card:hover{box-shadow:0 6px 16px #0001}@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -198,8 +199,8 @@ return `<div class="kg">${S("Today's Orders",T.length)}${S("Today's Sales","₹"
 +(low.length?`<div class="card stack"><b>Low stock</b>${low.slice(0,8).map(p=>`<div class="row"><span>${esc(p.name)}</span><b>${p.stock}</b></div>`).join("")}</div>`:"")}
 function aCard(o){
 let h=`<div class="card stack"><div class="row"><b>#${oid(o)} · ${esc(o.name)}</b>${badge(o)}</div><div class="mu s2">${dt(o)}</div><div>${itemsT(o)}</div><div class="row"><span>₹${o.total} · ${o.pay=="upi"?"UPI":"COD"}</span>${o.pay=="upi"?`<button class="chip ${o.paid?"on":""}" onclick="paid('${o.id}',${!o.paid})">${o.paid?"Payment verified ✓":"Verify UTR "+esc(o.utr)}</button>`:""}</div><div class="mu">📍 ${esc(o.addr)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></div>`;
-if(o.status=="pending")h+=`<select id="r${o.id}">${riders.map(r=>`<option value="${r.id}" ${free(r)?"":"disabled"}>${esc(r.name)} (${free(r)?"Available":busy(r)?"Busy":"Offline"})</option>`).join("")||"<option>No riders</option>"}</select><button class="b w" onclick="assign('${o.id}')">Assign rider</button>`;
-else h+=`<div class="mu">Rider: ${esc(o.riderName)}</div>`;
+if(o.status=="pending")h+=`<input id="e${o.id}" type="number" min="1" placeholder="Delivery time in minutes (e.g. 15)" value="15"><select id="r${o.id}">${riders.map(r=>`<option value="${r.id}" ${free(r)?"":"disabled"}>${esc(r.name)} (${free(r)?"Available":busy(r)?"Busy":"Offline"})</option>`).join("")||"<option>No riders</option>"}</select><button class="b w" onclick="assign('${o.id}')">Confirm &amp; assign rider</button>`;
+else h+=`<div class="mu">Rider: ${esc(o.riderName)}</div>`+(o.status=="delivered"||o.status=="cancelled"?"":`<div class="row"><span class="mu">${o.eta?"⏱ "+o.eta+" mins · by "+new Date(o.etaAt+o.eta*60000).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"No delivery time set"}</span><button class="b l" onclick="setEta('${o.id}')">Update time</button></div>`);
 return h+"</div>"}
 function ordList(){const k=aq.trim().toLowerCase();return orders.slice().sort(byTime).filter(o=>(ofl=="all"||o.status==ofl)&&(!k||(oid(o)+o.name+o.phone).toLowerCase().includes(k))).map(aCard).join("")||'<p class="mu">No orders.</p>'}
 function paid(id,v){db.collection("orders").doc(id).update({paid:v}).catch(e=>alert(e.message))}
@@ -220,8 +221,9 @@ if(tab=="set")return setV();
 if(tab=="cats")return CATS.map((c,i)=>`<div class="card row"><span class="row" style="gap:10px;justify-content:flex-start"><span class="ct s" style="background:${c[2]}">${catPic(i)}</span>${esc(c[0])}</span><span><button class="b l" onclick="setCat(${i})">Image</button>${catImg["c"+i]?` <button class="b l" onclick="clrCat(${i})">Reset</button>`:""}</span></div>`).join("");
 if(tab=="products")return `<button class="b w" onclick="addOpen=!addOpen;render(true)">${addOpen?"Close":"+ Add product"}</button>`+(addOpen?prodForm():"")+`<input id="aq" class="srch" placeholder="Search products" value="${esc(aq)}" oninput="aS(this.value)" style="margin-top:10px"><div id="ares">${prodList()}</div>`;
 return `<div class="hs">${OF.map(f=>`<button class="chip ${ofl==f[0]?"on":""}" onclick="ofl='${f[0]}';render(true)">${f[1]} ${f[0]=="all"?orders.length:orders.filter(o=>o.status==f[0]).length}</button>`).join("")}</div><input id="aq" class="srch" placeholder="Search order no., name or phone" value="${esc(aq)}" oninput="aS(this.value)"><div id="ares">${ordList()}</div>`}
-async function assign(id){const rid=$("#r"+id).value,r=riders.find(x=>x.id==rid);if(!r||!free(r))return alert("No available rider");
-try{await db.collection("orders").doc(id).update({riderId:r.id,riderName:r.name,status:"assigned",assignedAt:TS()})}catch(e){alert(e.message)}}
+async function assign(id){const rid=$("#r"+id).value,r=riders.find(x=>x.id==rid),m=+$("#e"+id).value;if(!(m>0))return alert("Enter the delivery time in minutes");if(!r||!free(r))return alert("No available rider");
+try{await db.collection("orders").doc(id).update({riderId:r.id,riderName:r.name,status:"assigned",assignedAt:TS(),eta:m,etaAt:Date.now()})}catch(e){alert(e.message)}}
+function setEta(id){const o=orders.find(x=>x.id==id),v=prompt("New delivery time from now (minutes)",o.eta||15);if(v===null||!(+v>0))return;db.collection("orders").doc(id).update({eta:+v,etaAt:Date.now()}).catch(e=>alert(e.message))}
 async function addP(){const n=$("#pn").value.trim(),p=+$("#pp").value,s=+$("#ps").value,m=+$("#pm").value||0;if(!n||!p||s<0)return alert("Enter name, price and stock");
 try{await db.collection("products").add({name:n,price:p,mrp:m,stock:s,img:pPhoto||$("#pi").value.trim(),cat:$("#pc").value,sec:SECS.filter((x,i)=>$("#sf"+i).checked).map(x=>x[0])});["#pn","#pp","#ps","#pi","#pm"].forEach(x=>$(x).value="");SECS.forEach((x,i)=>$("#sf"+i).checked=false);pPhoto="";addOpen=false;render(true)}catch(e){alert(e.message)}}
 async function stk(id){const v=prompt("New stock quantity");if(v===null||isNaN(+v))return;db.collection("products").doc(id).update({stock:+v})}
