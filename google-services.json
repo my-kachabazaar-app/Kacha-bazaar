@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "117258766044",
+    "project_id": "kacha-bazaar-7fda3",
+    "storage_bucket": "kacha-bazaar-7fda3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117258766044:android:22e1e6b38ee7e9f6efd619",
+        "android_client_info": {
+          "package_name": "com.kachabazaar.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIBQJ2jF5UkWL5Z44Q7t0_w0a7wkh1o8c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117258766044:android:03cc554ea724818defd619",
+        "android_client_info": {
+          "package_name": "com.kachabazaar.rider"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIBQJ2jF5UkWL5Z44Q7t0_w0a7wkh1o8c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117258766044:android:198a939f0c809303efd619",
+        "android_client_info": {
+          "package_name": "com.kachabazaar.user"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIBQJ2jF5UkWL5Z44Q7t0_w0a7wkh1o8c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
