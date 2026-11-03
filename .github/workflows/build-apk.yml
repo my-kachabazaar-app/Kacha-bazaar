@@ -11,7 +11,7 @@ jobs:
       matrix:
         include:
           - key: customer
-            appid: com.kachabazaar.app
+            appid: com.kachabazaar.user
             appname: Kacha Bazaar
             url: https://my-kachabazaar-app.github.io/Kacha-bazaar/
             tag: ""
