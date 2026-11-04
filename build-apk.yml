@@ -40,25 +40,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - name: Pick the package name from google-services.json
-        run: |
-          python3 - <<'PY'
-          import json, os
-          names = [c["client_info"]["android_client_info"]["package_name"] for c in json.load(open("google-services.json"))["client"]]
-          print("Package names in google-services.json:", names)
-          want = "${{ matrix.appid }}"
-          if want not in names:
-              key = "${{ matrix.key }}"
-              pick = [n for n in names if n.endswith("." + key)]
-              if not pick and key == "customer":
-                  pick = [n for n in names if not n.endswith(".admin") and not n.endswith(".rider")]
-              if not pick:
-                  raise SystemExit("No package name for " + key + " in google-services.json. Add that Android app in Firebase and upload a new google-services.json.")
-              want = pick[0]
-          print("Using package name:", want)
-          with open(os.environ["GITHUB_ENV"], "a") as f:
-              f.write("APPID=" + want + "\n")
-          PY
       - name: Create the Capacitor project
         run: |
           mkdir app
@@ -69,7 +50,7 @@ jobs:
           echo "<!doctype html><title>${{ matrix.appname }}</title>" > www/index.html
           cat > capacitor.config.json <<JSON
           {
-            "appId": "$APPID",
+            "appId": "${{ matrix.appid }}",
             "appName": "${{ matrix.appname }}",
             "webDir": "www",
             "server": { "url": "${{ matrix.url }}", "androidScheme": "https" },
