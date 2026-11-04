@@ -5,6 +5,10 @@ REGION="${1:-asia-south1}"
 PROJECT="kacha-bazaar-7fda3"
 mkdir -p kb-notify/functions
 cd kb-notify
+read -p "Cloudinary cloud name: " CN
+read -p "Cloudinary API key: " CK
+read -s -p "Cloudinary API secret (hidden): " CS; echo
+printf 'CLOUD_NAME=%s\nCLOUD_KEY=%s\nCLOUD_SECRET=%s\n' "$CN" "$CK" "$CS" > functions/.env
 cat > firebase.json <<'EOF'
 {"functions":[{"source":"functions","codebase":"default"}]}
 EOF
@@ -12,7 +16,8 @@ cat > functions/package.json <<'EOF'
 {"name":"functions","engines":{"node":"20"},"main":"index.js","dependencies":{"firebase-admin":"^12.0.0","firebase-functions":"^5.0.0"}}
 EOF
 cat > functions/index.js <<'EOF'
-const {onDocumentCreated,onDocumentUpdated}=require("firebase-functions/v2/firestore");
+const {onDocumentCreated,onDocumentUpdated,onDocumentDeleted}=require("firebase-functions/v2/firestore");
+const crypto=require("crypto");
 const admin=require("firebase-admin");
 admin.initializeApp();
 const db=admin.firestore(),R="__REGION__";
@@ -28,6 +33,22 @@ async function send(q,title,body){
 }
 const toUser=(uid,t,b)=>uid?send(db.collection("tokens").where("uid","==",uid),t,b):null;
 const toRole=(role,t,b)=>send(db.collection("tokens").where("role","==",role),t,b);
+
+// ---- Cloudinary clean-up: when a photo/file is deleted or replaced in the database, delete it from Cloudinary too ----
+const urlsOf=o=>{const out=[];(function w(v){if(typeof v==="string"){if(v.startsWith("https://res.cloudinary.com/"))out.push(v)}else if(Array.isArray(v))v.forEach(w);else if(v&&typeof v==="object")Object.values(v).forEach(w)})(o);return out};
+async function destroy(u){
+  const m=u.match(/\/(image|video|raw)\/(upload|authenticated|private)\/(?:s--[^/]+--\/)?v\d+\/(.+)$/);if(!m)return;
+  const pid=m[1]==="raw"?m[3]:m[3].replace(/\.[^./]+$/,""),ts=Math.floor(Date.now()/1000);
+  const sig=crypto.createHash("sha1").update(`invalidate=true&public_id=${pid}&timestamp=${ts}&type=${m[2]}${process.env.CLOUD_SECRET}`).digest("hex");
+  const body=new URLSearchParams({public_id:pid,timestamp:String(ts),type:m[2],invalidate:"true",api_key:process.env.CLOUD_KEY,signature:sig});
+  const r=await fetch(`https://api.cloudinary.com/v1_1/${process.env.CLOUD_NAME}/${m[1]}/destroy`,{method:"POST",body});
+  console.log("cloudinary destroy",pid,r.status);
+}
+const sweep=(b,a)=>{const keep=new Set(a?urlsOf(a):[]);return Promise.all(urlsOf(b).filter(u=>!keep.has(u)).map(destroy))};
+for(const [name,path] of [["products","products/{id}"],["categories","categories/{id}"],["riderBanners","riderBanners/{id}"],["files","files/{id}"],["kyc","users/{u}/kyc/{t}"],["settings","settings/{id}"]]){
+  exports["cldDel_"+name]=onDocumentDeleted({document:path,region:R},e=>sweep(e.data.data(),null));
+  exports["cldUpd_"+name]=onDocumentUpdated({document:path,region:R},e=>sweep(e.data.before.data(),e.data.after.data()));
+}
 exports.orderCreated=onDocumentCreated({document:"orders/{id}",region:R},e=>{const o=e.data.data();
   return Promise.all([toRole("admin","New order 🛒",`${o.name} · ₹${o.total} · ${o.pay==="upi"?"UPI":"COD"}`),toUser(o.uid,"Order placed ✅","We have received your order. Waiting for store confirmation.")])});
 exports.orderUpdated=onDocumentUpdated({document:"orders/{id}",region:R},e=>{

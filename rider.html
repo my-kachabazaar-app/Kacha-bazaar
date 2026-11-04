@@ -81,9 +81,27 @@ body{position:relative}
 .wk{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:6px 10px;margin:8px 0}.wk button{border:0;background:none;font-size:26px;color:var(--pr)}
 #pop .pb2{position:fixed;inset:0;background:#0007;z-index:50;display:flex;align-items:flex-end}#pop .pc2{background:var(--bg);color:var(--tx);width:100%;max-height:82vh;overflow:auto;border-radius:20px 20px 0 0;padding:14px}
 .b,.add,#nav button{transition:transform .12s}.b:active,.add:active,#nav button:active{transform:scale(.95)}.card{transition:transform .2s,box-shadow .2s}.card:hover{box-shadow:0 6px 16px #0001}@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@keyframes flt{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-12px) rotate(4deg)}}
+#spl{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0b5d2a url(rider-splash.jpg) center/cover no-repeat;transition:opacity .6s}
+#rbg{position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;background:linear-gradient(#ffffff99,var(--bg) 75%),url(rider-bg.jpg) center top/cover no-repeat;opacity:.6;display:none;pointer-events:none}
+.hd2{display:flex;align-items:center;gap:12px;background:var(--card);margin:0 -14px 12px;padding:12px 14px;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:6}
+.sp{width:48px;height:48px;border-radius:12px;background:#e8f6ec;display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;flex:none}.sp img{width:100%;height:100%;object-fit:cover}
+.hn{flex:1;min-width:0}.hn b{font-size:19px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hn .s2{color:var(--mu);font-weight:700;letter-spacing:.5px}
+.sw{width:58px;height:32px}.sw i:before{width:26px;height:26px}.sw input:checked+i:before{transform:translateX(26px)}
+.bnw{margin-bottom:8px}.bn2{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:16px;scrollbar-width:none}.bn2::-webkit-scrollbar{display:none}.bi{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:16/6}.bi img{width:100%;height:100%;object-fit:cover;display:block}
+.bdt{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:8px}.bdt i{width:8px;height:8px;border-radius:50%;background:#c9d2cc}.bdt i.on{background:var(--pr)}.cnt{background:#1d2a3a;color:#fff;border-radius:99px;padding:3px 12px;font-weight:700;font-size:14px}
+.sa{padding:14px}.sp2{width:52px;height:52px;border-radius:14px;background:#e8efff;display:flex;align-items:center;justify-content:center;font-size:28px;flex:none}.nav2{width:64px;height:64px;border-radius:14px;border:0;background:#e3f6e8;color:var(--pr);font-size:28px;flex:none}.sd{display:block;width:100%;margin-top:12px;border:0;border-radius:14px;background:#e3f6e8;color:var(--pr);padding:16px;font:inherit;font-size:20px;font-weight:700}
+.te{padding:18px}.tc3{display:grid;grid-template-columns:repeat(3,1fr);margin-top:18px}.tc3>div{text-align:center;border-left:1px solid var(--bd)}.tc3>div:first-child{border:0}.tc3 .v{font-size:22px;font-weight:800}.tc3 .l{color:var(--pr);font-weight:700;margin-top:4px;font-size:14px}
+.pcard{position:relative;background:var(--card);border-radius:24px;padding:16px 16px 76px;box-shadow:0 4px 14px #0001;margin:4px 0 12px;overflow:hidden}.since{text-align:right;font-weight:600;margin-bottom:6px}.prow{display:flex;gap:18px;align-items:center}.pav2{width:120px;height:120px;border-radius:50%;background:#e3f6e8;color:var(--pr);display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;flex:none}.pav2 img{width:100%;height:100%;object-fit:cover}.fn{font-size:30px;font-weight:800;color:var(--tx)}.ln{font-size:22px;color:var(--mu)}.rid{margin-top:6px;font-weight:700;color:var(--pr);letter-spacing:.5px}
+.vd{position:absolute;right:0;bottom:0;border:0;background:#e3f6e8;color:var(--pr);font:inherit;font-size:19px;font-weight:700;padding:16px 26px;border-radius:24px 0 24px 0}
+.ml .mi{display:flex;align-items:center;gap:18px;padding:12px 4px;border-bottom:1px solid #dbe8de}.ib{width:58px;height:58px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 2px 6px #0001;flex:none}.mi b{font-size:22px;font-weight:600}
+.empty{text-align:center;padding:90px 20px}.empty svg{animation:flt 3.5s ease-in-out infinite}.empty h2{font-size:26px}
+@media (prefers-color-scheme:light){body.pf{--bg:#eef9f1}}
+#nav button{position:relative}#nav button.on::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;background:var(--pr);border-radius:0 0 4px 4px}
 </style>
 </head>
 <body>
+<div id="spl"></div><div id="rbg"></div>
 <div id="top"></div>
 <main id="app"></main>
 <nav id="nav"></nav>
@@ -91,6 +109,7 @@ body{position:relative}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="push.js"></script>
+<script src="cld.js"></script>
 <script>
 /* ===== Edit these values ===== */
 const firebaseConfig={apiKey:"AIzaSyCNPi7mLkWMz1kGo3b2YXstjM65wbB0ZLw",authDomain:"kacha-bazaar-7fda3.firebaseapp.com",projectId:"kacha-bazaar-7fda3",appId:"1:117258766044:web:95ece03ae97604d7efd619"};
@@ -122,7 +141,7 @@ const byTime=(a,b)=>((b.createdAt&&b.createdAt.seconds)||9e9)-((a.createdAt&&a.c
 const busy=r=>orders.some(o=>o.riderId==r.id&&ACTIVE.includes(o.status));
 const free=r=>r.available&&!busy(r);
 
-function pickImg(max,cb){const f=document.createElement("input");f.type="file";f.accept="image/*";f.onchange=()=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas"),x=c.getContext("2d");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.75))};im.src=r.result};r.readAsDataURL(f.files[0])};f.click()}
+let rbanners=[],bIdx=0;
 let me=null,unsubs=[],orders=[],tickets=[],deps=[],cfg={},notes=[],kyc={},kimg={},tab="home",sub="",wk=0,bell=false,cb=0,tk="",editB=false,scr="id",ctx={},signing=false;
 const _ping=ping;ping=function(m){notes.unshift(m+" · "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));notes=notes.slice(0,8);_ping(m)};
 const dkey=t=>{const d=new Date(t);return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()};
@@ -149,7 +168,7 @@ tab="home";sub="";window.kbPush&&kbPush(db,me.uid,me.role);
 unsubs.push(db.collection("settings").doc("rider").onSnapshot(x=>{cfg=x.exists?x.data():{};soft()},()=>{}));
 listen(db.collection("orders").where("riderId","==",me.uid),a=>orders=a,"A new order was assigned to you!");
 listen(db.collection("tickets").where("riderId","==",me.uid),a=>tickets=a);
-listen(db.collection("deposits").where("riderId","==",me.uid),a=>deps=a);
+listen(db.collection("deposits").where("riderId","==",me.uid),a=>deps=a);listen(db.collection("riderBanners"),a=>rbanners=a);
 db.collection("users").doc(me.uid).collection("kyc").doc("selfie").get().then(x=>{if(x.exists){me.selfie=x.data().img;soft()}}).catch(()=>{});
 if(window.Notification&&Notification.permission==="default")Notification.requestPermission();
 scr="main";render(true)}catch(e){alert(e.message)}}
@@ -178,7 +197,7 @@ if(scr=="kyc")return `<div class="card stack"><h2>Verify your identity</h2><p cl
 return `<div class="card stack" style="text-align:center"><div style="font-size:48px">⏳</div><h2>Verification in progress</h2><p>Your documents have been submitted. Our store manager will approve your ID very soon.</p>`+B("Check again","recheck()")+B("Logout","auth.signOut()","l")+"</div>"}
 async function chk(){try{const u=auth.currentUser;await u.reload();if(!u.emailVerified)return alert("Not verified yet. Click the link in your email.");await u.getIdToken(true);boot(u)}catch(e){alert(e.message)}}
 function resend(){auth.currentUser.sendEmailVerification().then(()=>alert("Link sent again")).catch(e=>alert(e.message))}
-function up(t){pickImg(900,d=>{kyc[t]=d;render(true)})}
+function up(t){pickImg(900,d=>{kyc[t]=d;render(true)},true)}
 async function subKyc(){if(!kyc.aadhaar||!kyc.pan||!kyc.selfie)return alert("Please upload Aadhaar, PAN and a selfie.");
 try{for(const k of Object.keys(kyc))await db.collection("users").doc(me.uid).collection("kyc").doc(k).set({img:kyc[k]});await db.collection("users").doc(me.uid).update({kyc:"submitted"});me.kyc="submitted";scr="wait";render(true)}catch(e){alert(e.message)}}
 async function recheck(){try{const d=await db.collection("users").doc(me.uid).get();if(d.data().approved)boot(auth.currentUser);else alert("Still waiting for approval.")}catch(e){alert(e.message)}}
@@ -190,12 +209,19 @@ me.available=v;me.onlineAt=v?now:0;db.collection("users").doc(me.uid).update(u).
 function ordCard(o){const nx={assigned:["accepted","Accept Order",""],accepted:["collected","Collected from store","g"],collected:["delivered","Delivered to customer","g"]}[o.status];
 return `<div class="card stack"><div class="row"><b>Order #${oid(o)}</b>${badge(o)}</div><div class="mu">${itemsT(o)}<br>📍 ${esc(o.name)}, ${esc(o.addr)}<br>📞 <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a></div><b>${o.pay=="cod"?"Collect cash: ₹"+o.total:"Paid via UPI"}</b><button class="b w ${nx[2]}" onclick="setS('${o.id}','${nx[0]}')">${nx[1]}</button></div>`}
 function setS(id,s){const u={status:s};if(s=="delivered"){u.deliveredAt=TS();u.earn=calcEarn()}db.collection("orders").doc(id).update(u).catch(e=>alert(e.message))}
+const bnV=()=>{const B=rbanners.slice().sort((a,b)=>(a.at||0)-(b.at||0));if(!B.length)return "";if(bIdx>=B.length)bIdx=0;return `<div class="bnw"><div class="bn2" id="bn">${B.map(b=>`<div class="bi"><img src="${esc(b.img)}" alt=""></div>`).join("")}</div><div class="bdt"><span class="cnt" id="bc">${bIdx+1}/${B.length}</span>${B.map((b,i)=>`<i class="${i==bIdx?"on":""}"></i>`).join("")}</div></div>`};
+function bnInit(){const c=document.getElementById("bn");if(!c||!c.addEventListener)return;c.scrollLeft=bIdx*c.clientWidth;
+c.addEventListener("scroll",()=>{const n=c.children.length,i=Math.min(n-1,Math.round(c.scrollLeft/c.clientWidth));if(i!==bIdx){bIdx=i;const t=document.getElementById("bc");if(t)t.textContent=(i+1)+"/"+n;document.querySelectorAll(".bdt i").forEach((d,j)=>d.className=j==i?"on":"")}},{passive:true})}
+setInterval(()=>{const c=document.getElementById("bn");if(!c||!c.children||c.children.length<2||document.hidden)return;bIdx=(bIdx+1)%c.children.length;c.scrollTo({left:bIdx*c.clientWidth,behavior:"smooth"})},3500);
+const stH=()=>`<div class="card sa"><div class="row" style="align-items:flex-start;gap:12px"><div class="sp2">🏪</div><div style="flex:1;min-width:0"><b style="font-size:20px">Store Address</b><div class="mu">${esc(cfg.address||"Not added yet")}</div></div><button class="nav2" onclick="openStore()">➜</button></div><button class="sd" onclick="storeDet()">Store Details ›</button></div>`;
+function storeDet(){pop(`<h2>Store Details</h2><div class="card stack"><b>${esc(cfg.storeName||STORE)}</b><div class="mu">${esc(cfg.address||"Address not added yet")}</div>${cfg.mgrName?`<div>Store manager: <b>${esc(cfg.mgrName)}</b></div>`:""}${cfg.mgrPhone?`<a class="b" href="tel:${esc(cfg.mgrPhone)}">📞 ${esc(cfg.mgrPhone)}</a>`:""}${cfg.mapUrl?`<button class="b l w" onclick="openStore()">Open in Maps</button>`:""}</div>`)}
 function homeV(){const t=todayStats(),act=orders.filter(o=>ACTIVE.includes(o.status)).sort(byTime);
-let h=`<div class="rh row"><b>🏬 ${esc(STORE)}</b><span class="row" style="gap:10px"><span class="sws">${me.available?"Online":"Offline"}</span><label class="sw"><input type="checkbox" ${me.available?"checked":""} onchange="duty(this.checked)"><i></i></label><button class="hz2" onclick="bell=!bell;render(true)">🔔${notes.length?`<sup>${notes.length}</sup>`:""}</button></span></div>`;
+let h=`<div class="hd2"><div class="sp">${cfg.storePhoto?`<img src="${esc(cfg.storePhoto)}" alt="">`:"🏬"}</div><div class="hn"><b>${esc(cfg.storeName||STORE)}</b><div class="s2">${esc(me.riderCode||"")}</div></div><label class="sw"><input type="checkbox" ${me.available?"checked":""} onchange="duty(this.checked)"><i></i></label><button class="hz2" onclick="bell=!bell;render(true)">🔔${notes.length?`<sup>${notes.length}</sup>`:""}</button></div>`;
 if(bell)h+=`<div class="card stack"><b>Notifications</b>${notes.map(n=>`<div class="mu s2">${esc(n)}</div>`).join("")||'<div class="mu s2">No notifications yet.</div>'}</div>`;
 if(act.length)h+='<h2>Current order</h2>'+act.map(ordCard).join("");
 else if(me.available)h+=`<div class="srchbox"><div class="radar"><span></span><span></span><span></span><b>🛵</b></div><div class="srch">SEARCHING YOUR ORDER<span class="dots"><i>.</i><i>.</i><i>.</i></span></div></div>`;
-return h+`<h2>Today</h2><div class="g3"><div class="st" style="background:#d6e9fb"><div class="s2">Login Hrs</div><b>${hm(t.secs)}</b></div><div class="st" style="background:#d9f0d2"><div class="s2">Order done</div><b>${t.n}</b></div><div class="st" style="background:#fdeec4"><div class="s2">Total Earning</div><b>${rs(t.earn)}</b></div></div><h2>Cash Balance</h2><div class="card cashc"><div class="s2">Today's COD collected</div><b style="font-size:26px">${rs(t.cod)}</b></div>`}
+h+=bnV()+stH();
+return h+`<h2>Total Earnings</h2><div class="card te"><div class="row"><b style="font-size:20px">${t.n?"Today's earnings "+rs(t.earn):"Deliver Orders to Start Earning"}</b><span style="font-size:34px">💰</span></div><div class="tc3"><div><div class="v">⏱ ${hm(t.secs)}</div><div class="l">Login Hrs ›</div></div><div><div class="v">📦 ${t.n}</div><div class="l">Order Done ›</div></div><div><div class="v">${rs(t.earn)}</div><div class="l">Earning ›</div></div></div></div><h2>Cash Balance</h2><div class="card cashc"><div class="s2">Today's COD collected</div><b style="font-size:26px">${rs(t.cod)}</b></div>`}
 const wkStart=o=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7+o*7);return d};
 function earnV(){const mon=wkStart(wk),L=[];let tot=0,cnt=0;
 for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const k=dkey(d),m=dels().filter(o=>dkey(ms(o))==k),e=m.reduce((s,o)=>s+(o.earn||0),0);tot+=e;cnt+=m.length;L.push(`<div class="card row"><span><b>${d.toLocaleDateString([],{weekday:"long"})}</b><div class="mu s2">${d.toLocaleDateString([],{day:"numeric",month:"short"})} · ${m.length} orders</div></span><b>${rs(e)}</b></div>`)}
@@ -203,15 +229,19 @@ const end=new Date(mon);end.setDate(mon.getDate()+6);const lab=wk==0?"THIS WEEK"
 return `<div class="rh row"><b>Earning</b><button class="va" onclick="alert('Coming soon')">View surge ›</button></div><div class="row mu s2"><span>${esc(me.riderCode||"")}</span><span>${tm(Date.now())}</span></div><div class="wk row"><button onclick="wk--;render(true)">‹</button><b>${lab}</b><button ${wk>=0?"disabled":""} onclick="wk++;render(true)">›</button></div><div class="card cashc row"><span>Week total · ${cnt} orders</span><b style="font-size:22px">${rs(tot)}</b></div>`+L.join("")}
 const referV=()=>'<div class="rh row"><b>Refer &amp; Earn</b></div><div class="card" style="text-align:center;padding:40px 10px"><div style="font-size:54px">🎁</div><h2>Coming soon</h2><p class="mu">Refer your friends and earn rewards. This feature is coming soon.</p></div>';
 function profV(){
-if(sub=="rate")return rateV();if(sub=="hist")return histV();if(sub=="help")return helpV();if(sub=="cash")return cashV();if(sub=="doc")return docV();if(sub=="about")return aboutV();
-const j=me.createdAt&&me.createdAt.seconds?fd(me.createdAt.seconds*1000):"";
-const I=(ic,t,fn)=>`<div class="pi" onclick="${fn}"><span>${ic}</span><div>${t}</div><span class="mu">›</span></div>`;
-return `<div class="phd"><div class="s2" style="text-align:right">Joined: ${j}</div><div class="row" style="justify-content:flex-start;gap:14px"><div class="pav">${me.selfie?`<img src="${me.selfie}" alt="">`:esc((me.name||"?")[0])}</div><div><b style="font-size:20px">${esc(me.name)}</b><div class="s2">${esc(me.riderCode||"")}</div></div></div></div><div class="card pl">${I("🏬","Your store","openStore()")}${I("🧾","Rate Card","sub='rate';render(true)")}${I("📦","Order History","sub='hist';render(true)")}${I("💬","Help &amp; support","sub='help';render(true)")}${I("💵","Cash Balance","sub='cash';render(true)")}${I("📁","Document","openDoc()")}${I("ℹ️","About","sub='about';render(true)")}</div><button class="b l w" onclick="auth.signOut()">Logout</button>`}
+if(sub=="rate")return rateV();if(sub=="hist")return histV();if(sub=="help")return helpV();if(sub=="cash")return cashV();if(sub=="doc")return docV();if(sub=="about")return aboutV();if(sub=="me")return meV();
+const j=me.createdAt&&me.createdAt.seconds?new Date(me.createdAt.seconds*1000).toLocaleDateString("en-US",{month:"short",year:"numeric"}):"";
+const nm=(me.name||"").trim().split(/\s+/),f=nm[0]||"",l=nm.slice(1).join(" ");
+const I=(ic,t,fn)=>`<div class="mi" onclick="${fn}"><span class="ib">${ic}</span><b>${t}</b></div>`;
+return `<div class="pcard"><div class="since">🏅 Partner since ${j}</div><div class="prow"><div class="pav2">${me.selfie?`<img src="${esc(me.selfie)}" alt="">`:esc((f[0]||"?").toUpperCase())}</div><div><div class="fn">${esc(f)}</div><div class="ln">${esc(l)}</div><div class="rid">${esc(me.riderCode||"")}</div></div></div><button class="vd" onclick="sub='me';render(true)">View Details →</button></div><div class="ml">${I("🏪","Your Store","openStore()")}${I("🧾","My Rate Card","sub='rate';render(true)")}${I("📦","Order History","sub='hist';render(true)")}${I("💬","Help &amp; Support","sub='help';render(true)")}${I("💵","Cash Balance","sub='cash';render(true)")}${I("📁","Document","openDoc()")}${I("ℹ️","About","sub='about';render(true)")}</div><button class="b l w" style="margin-top:14px" onclick="auth.signOut()">Logout</button>`}
+function meV(){const j=me.createdAt&&me.createdAt.seconds?fd(me.createdAt.seconds*1000):"";const X=(a,b)=>`<div class="card row"><span class="mu">${a}</span><b>${esc(b)}</b></div>`;
+return back+'<h2>My Details</h2>'+X("Name",me.name)+X("Rider ID",me.riderCode||"-")+X("Mobile","+91 "+me.phone)+X("Email",me.email||"")+X("Joined",j)+(me.ref?X("Referral code",me.ref):"")}
 function openStore(){if(cfg.mapUrl)window.open(cfg.mapUrl,"_blank");else alert("Store location is not set yet.")}
 function rateV(){const R=(a,b)=>`<div class="card row"><span>${a}</span><b>${b}</b></div>`;
 return back+'<h2>Rate Card</h2>'+R("Pay per order",rs(cfg.pay))+R("Surge",cfg.surgeOn?"+"+rs(cfg.surge)+" / order":"Not active")+R("Rain surge",cfg.rainOn?"+"+rs(cfg.rain)+" / order":"Not active")+(cfg.note?`<div class="card mu">${esc(cfg.note)}</div>`:"")}
+const EMPTY=`<div class="empty"><svg viewBox="0 0 120 120" width="150" height="150"><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e09a2f"/><stop offset=".6" stop-color="#c0392b"/><stop offset="1" stop-color="#d63a5a"/></linearGradient><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3f3f3"/><stop offset="1" stop-color="#9aa0a6"/></linearGradient></defs><path d="M42 40c0-16 11-24 19-24s19 8 19 24" fill="none" stroke="url(#g2)" stroke-width="7" stroke-linecap="round"/><path d="M30 40h60l6 52c.5 5-3 8-8 8H32c-5 0-8.5-3-8-8z" fill="url(#g1)"/></svg><h2>No Orders</h2><p class="mu">Once you deliver orders, they will show up here</p></div>`;
 function histV(){const lim=Date.now()-30*864e5,m={};dels().filter(o=>ms(o)>=lim).forEach(o=>{const k=dkey(ms(o));(m[k]=m[k]||[]).push(o)});const ks=Object.keys(m).sort().reverse();
-return back+'<h2>Order History (last 30 days)</h2>'+(ks.map(k=>`<div class="card row" onclick="dayPop(${k})"><b>${fd(ms(m[k][0]))}</b><span>${m[k].length} orders · ${rs(m[k].reduce((s,o)=>s+(o.earn||0),0))} ›</span></div>`).join("")||'<p class="mu">No deliveries in the last 30 days.</p>')}
+return back+'<h2>Order History (last 30 days)</h2>'+(ks.map(k=>`<div class="card row" onclick="dayPop(${k})"><b>${fd(ms(m[k][0]))}</b><span>${m[k].length} orders · ${rs(m[k].reduce((s,o)=>s+(o.earn||0),0))} ›</span></div>`).join("")||EMPTY)}
 function dayPop(k){const L=dels().filter(o=>dkey(ms(o))==k);pop(`<h2>${fd(ms(L[0]))}</h2><div class="mu">${L.length} orders delivered</div>`+L.map(o=>`<div class="card stack"><b>Order #${oid(o)}</b><div class="mu s2">${itemsT(o)}</div><div class="row"><span>${o.pay.toUpperCase()} · ₹${o.total}</span><b>${rs(o.earn)}</b></div></div>`).join(""))}
 function pop(h){let p=document.getElementById("pop");if(!p){p=document.createElement("div");p.id="pop";document.body.appendChild(p)}p.innerHTML=`<div class="pb2" onclick="if(event.target==this)this.parentNode.style.display='none'"><div class="pc2">${h}<button class="b w" onclick="document.getElementById('pop').style.display='none'">Close</button></div></div>`;p.style.display="block"}
 function cashV(){const cod=dels().filter(o=>o.pay=="cod").sort((a,b)=>ms(b)-ms(a)),tot=cod.reduce((s,o)=>s+o.total,0),dep=deps.reduce((s,d)=>s+(+d.amount||0),0),bal=Math.max(0,tot-dep);let rem=bal;const rows=[];cod.forEach(o=>{if(rem>0){rows.push(o);rem-=o.total}});
@@ -222,7 +252,7 @@ return back+'<h2>Documents</h2>'+KY.map(k=>`<div class="card"><b>${k[1]}</b>${ki
 async function saveBank(){const b={name:$("#bn").value.trim(),acc:$("#ba").value.trim(),bank:$("#bk").value.trim(),ifsc:$("#bi").value.trim().toUpperCase()};if(!b.name||!b.acc||!b.bank||!b.ifsc)return alert("Fill in all bank details");
 try{await db.collection("users").doc(me.uid).update({bank:b});me.bank=b;editB=false;render(true)}catch(e){alert(e.message)}}
 const aboutV=()=>back+`<h2>About</h2><div class="card pl"><div class="pi" onclick="openPdf('terms')"><span>📄</span><div>Terms &amp; Conditions</div><span class="mu">›</span></div><div class="pi" onclick="openPdf('privacy')"><span>🔒</span><div>Privacy Policy</div><span class="mu">›</span></div></div>`;
-async function openPdf(k){try{const d=await db.collection("files").doc(k).get();if(!d.exists)return alert("Not uploaded yet.");const b=atob(d.data().data.split(",")[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);window.open(URL.createObjectURL(new Blob([a],{type:"application/pdf"})),"_blank")}catch(e){alert(e.message)}}
+async function openPdf(k){try{const d=await db.collection("files").doc(k).get();if(!d.exists||!d.data().url)return alert("Not uploaded yet.");window.open(d.data().url,"_blank")}catch(e){alert(e.message)}}
 const tg2=t=>`<span class="tag ${t.status=="closed"?"":"s-delivered"}">${t.status=="closed"?"Closed":"Active"}</span>`;
 function helpV(){const t=tickets.find(x=>x.id==tk);
 if(t)return back+`<h2>${esc(t.subject)}</h2>${tg2(t)}`+t.msgs.map(m=>`<div class="card"><div class="mu s2">${m.from=="admin"?"Store manager":"You"} · ${tm(m.at)}</div>${esc(m.text)}</div>`).join("")+`<input id="tr" placeholder="Write a reply"><button class="b w" onclick="rep('${t.id}')">Send reply</button>`;
@@ -231,12 +261,14 @@ function newTk(){const s=$("#ts").value.trim();if(!s)return alert("Describe your
 function rep(id){const x=$("#tr").value.trim();if(!x)return;db.collection("tickets").doc(id).update({msgs:firebase.firestore.FieldValue.arrayUnion({from:"rider",text:x,at:Date.now()}),status:"open"}).then(()=>{$("#tr").value=""}).catch(e=>alert(e.message))}
 function swap(a,html){const k={};a.querySelectorAll("input[id]").forEach(e=>{if(e.type!="password")k[e.id]=e.value});a.innerHTML=html;Object.keys(k).forEach(i=>{const e=document.getElementById(i);if(e&&k[i]!==""&&e.type!="checkbox")e.value=k[i]})}
 function render(force){const a=$("#app"),nav=$("#nav");$("#top").innerHTML="";
+$("#rbg").style.display=(me&&scr=="main"&&tab=="home"&&!sub)?"block":"none";document.body.className=(me&&scr=="main"&&tab=="prof"&&!sub)?"pf":"";
 if(!me){nav.style.display="none";return swap(a,authV())}
 if(scr!="main"){nav.style.display="none";return swap(a,gateV())}
 nav.style.display="";
 const N=[["home","🏠","Home"],["earn","💰","Earning"],["refer","🎁","Refer &amp; Earn"],["prof","👤","Profile"]];
 nav.innerHTML=N.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="tab='${t[0]}';sub='';tk='';bell=false;render(true);scrollTo(0,0)"><span>${t[1]}</span>${t[2]}</button>`).join("");
-swap(a,tab=="home"?homeV():tab=="earn"?earnV():tab=="refer"?referV():profV())}
+swap(a,tab=="home"?homeV():tab=="earn"?earnV():tab=="refer"?referV():profV());if(tab=="home")bnInit()}
+setTimeout(()=>{const s=document.getElementById("spl");if(s){s.style.opacity=0;setTimeout(()=>{s.remove&&s.remove()},700)}},2600);
 </script>
 </body>
 </html>
