@@ -10,6 +10,7 @@ var p=await P.checkPermissions();
 if(p.receive!=="granted")p=await P.requestPermissions();
 if(p.receive!=="granted")return;
 try{await P.createChannel({id:"orders",name:"Orders & updates",description:"Order, delivery and support updates",importance:5,visibility:1,sound:"default",vibration:true})}catch(e){}
+try{await P.createChannel({id:"kb_order",name:"New order alerts",description:"Alert tone for new orders",importance:5,visibility:1,sound:"kb_order.wav",vibration:true})}catch(e){}
 await P.removeAllListeners();
 P.addListener("registration",function(t){db.collection("tokens").doc(t.value).set({uid:uid,role:role,at:Date.now()}).catch(function(e){console.log(e)})});
 P.addListener("registrationError",function(e){console.log("push error",e)});

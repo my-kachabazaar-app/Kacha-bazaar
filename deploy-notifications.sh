@@ -21,17 +21,17 @@ const crypto=require("crypto");
 const admin=require("firebase-admin");
 admin.initializeApp();
 const db=admin.firestore(),R="__REGION__";
-async function send(q,title,body){
+async function send(q,title,body,ch){
   const s=await q.get();const tokens=s.docs.map(d=>d.id);if(!tokens.length)return;
   for(let i=0;i<tokens.length;i+=500){
     const t=tokens.slice(i,i+500);
-    const r=await admin.messaging().sendEachForMulticast({tokens:t,notification:{title,body},android:{priority:"high",notification:{channelId:"orders",sound:"default"}}});
+    const r=await admin.messaging().sendEachForMulticast({tokens:t,notification:{title,body},android:{priority:"high",notification:{channelId:ch||"orders",sound:ch==="kb_order"?"kb_order":"default"}}});
     const bad=[];
     r.responses.forEach((x,j)=>{const c=(x.error&&x.error.code)||"";if(!x.success&&/not-registered|invalid-argument|invalid-registration/.test(c))bad.push(t[j])});
     await Promise.all(bad.map(k=>db.collection("tokens").doc(k).delete()));
   }
 }
-const toUser=(uid,t,b)=>uid?send(db.collection("tokens").where("uid","==",uid),t,b):null;
+const toUser=(uid,t,b,ch)=>uid?send(db.collection("tokens").where("uid","==",uid),t,b,ch):null;
 const toRole=(role,t,b)=>send(db.collection("tokens").where("role","==",role),t,b);
 
 // ---- Cloudinary clean-up: when a photo/file is deleted or replaced in the database, delete it from Cloudinary too ----
@@ -45,7 +45,7 @@ async function destroy(u){
   console.log("cloudinary destroy",pid,r.status);
 }
 const sweep=(b,a)=>{const keep=new Set(a?urlsOf(a):[]);return Promise.all(urlsOf(b).filter(u=>!keep.has(u)).map(destroy))};
-for(const [name,path] of [["products","products/{id}"],["categories","categories/{id}"],["riderBanners","riderBanners/{id}"],["files","files/{id}"],["kyc","users/{u}/kyc/{t}"],["settings","settings/{id}"]]){
+for(const [name,path] of [["products","products/{id}"],["categories","categories/{id}"],["riderMedia","riderMedia/{id}"],["files","files/{id}"],["kyc","users/{u}/kyc/{t}"],["settings","settings/{id}"]]){
   exports["cldDel_"+name]=onDocumentDeleted({document:path,region:R},e=>sweep(e.data.data(),null));
   exports["cldUpd_"+name]=onDocumentUpdated({document:path,region:R},e=>sweep(e.data.before.data(),e.data.after.data()));
 }
@@ -53,11 +53,12 @@ exports.orderCreated=onDocumentCreated({document:"orders/{id}",region:R},e=>{con
   return Promise.all([toRole("admin","New order 🛒",`${o.name} · ₹${o.total} · ${o.pay==="upi"?"UPI":"COD"}`),toUser(o.uid,"Order placed ✅","We have received your order. Waiting for store confirmation.")])});
 exports.orderUpdated=onDocumentUpdated({document:"orders/{id}",region:R},e=>{
   const b=e.data.before.data(),a=e.data.after.data(),j=[];
-  if(!b.riderId&&a.riderId){j.push(toUser(a.riderId,"New order assigned 🛵",`${a.name} · ${a.addr}`));j.push(toUser(a.uid,"Order confirmed ✅",a.eta?`Arriving in about ${a.eta} mins`:"Your order has been confirmed"))}
+  if(!b.riderId&&a.riderId){j.push(toUser(a.riderId,"New order assigned 🛵",`${a.name} · ${a.addr}`,"kb_order"));j.push(toUser(a.uid,"Order confirmed ✅",a.eta?`Arriving in about ${a.eta} mins`:"Your order has been confirmed"))}
   else if(a.eta&&(a.eta!==b.eta||a.etaAt!==b.etaAt))j.push(toUser(a.uid,"Delivery time updated ⏱",`Now arriving in about ${a.eta} mins`));
   if(b.status!==a.status){
-    const m={accepted:["Rider on the way 🛵","Your rider is heading to the store"],collected:["Out for delivery 📦","Your order has been picked up"],delivered:["Order delivered ✅","Thank you for ordering with us!"],cancelled:["Order cancelled","Your order was cancelled. Contact support if you need help."]}[a.status];
+    const m={accepted:["Rider on the way 🛵","Your rider is heading to the store"],collected:["Out for delivery 📦","Your order has been picked up"],arrived:["Rider arrived 📍","Your rider has reached your location"],delivered:["Order delivered ✅","Thank you for ordering with us!"],cancelled:["Order cancelled","Your order was cancelled. Contact support if you need help."]}[a.status];
     if(m)j.push(toUser(a.uid,m[0],m[1]));
+    if(a.status==="cancelled")j.push(toRole("admin","Order cancelled ❌",`${a.name} · ${a.cancelReason||""}`));
     if(a.status==="delivered")j.push(toRole("admin","Order delivered ✅",`${a.name} · ₹${a.total}`));
   }
   return Promise.all(j)});

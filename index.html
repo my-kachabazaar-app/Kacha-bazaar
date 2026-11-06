@@ -121,8 +121,8 @@ let DELIVERY_FEE=30,TAX_PCT=5;
 /* ========================================= */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const ST={pending:"Pending",assigned:"Assigned",accepted:"Accepted",collected:"Collected",delivered:"Delivered"};
-const ACTIVE=["assigned","accepted","collected"];
+const ST={pending:"Pending",assigned:"Assigned",accepted:"Accepted",collected:"Collected",arrived:"Arrived",delivered:"Delivered",cancelled:"Cancelled"};
+const ACTIVE=["assigned","accepted","collected","arrived"];
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 if(firebaseConfig.apiKey.startsWith("YOUR")){document.getElementById("app").innerHTML='<div class="card"><b>Setup pending</b><p>Add your firebaseConfig in index.html.</p></div>';throw new Error("config missing")}
 firebase.initializeApp(firebaseConfig);
@@ -249,6 +249,8 @@ function needLogin(t){after=t;showAuth=true;scr="id";render(true)}
 async function chAddr(){const n=prompt("Delivery address",addrNow());if(n===null)return;gAddr=n.trim();if(me){me.addr=gAddr;try{await db.collection("users").doc(me.uid).update({addr:gAddr})}catch(e){alert(e.message)}}render(true)}
 function rmI(id){delete cart[id];render(true)}
 function goCheckout(){if(!me)return needLogin("checkout");tab="checkout";render(true);scrollTo(0,0)}
+var myLoc=null;
+function getLoc(){navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{myLoc={lat:p.coords.latitude,lng:p.coords.longitude};toast("Location added");render(true)},e=>alert("Could not get location: "+e.message),{enableHighAccuracy:true,timeout:15000}):alert("Location is not available")}
 function savings(){let n=0;Object.keys(cart).forEach(id=>{const p=products.find(x=>x.id==id);if(p&&p.mrp>p.price)n+=(p.mrp-p.price)*cart[id]});return n}
 function cartV(){
 const ids=Object.keys(cart).filter(id=>products.some(p=>p.id==id));
@@ -265,7 +267,7 @@ h+=`<div class="card stack"><b>🧾 Bill Details</b><div class="row"><span>Item 
 if(sv)h+=`<div class="svc"><div class="row"><b style="font-size:18px">Savings on this order</b><span class="tag s-delivered" style="font-size:16px">₹${sv}</span></div><div class="in" style="margin-top:10px"><div class="row"><span>% Discount on MRP</span><b>₹${sv}</b></div></div></div>`;
 return h+`<div style="height:80px"></div><div class="fixb"><button class="cta" onclick="${ad?"goCheckout()":"chAddr().then(()=>{if(addrNow())goCheckout()})"}">${ad?"Proceed to Checkout":"Select Address"}</button></div>`}
 function checkoutV(){const t=tots();if(!t.sub)return cartV();
-let h=`${pgHd("Checkout","","tab='cart';render(true)")}<div class="card stack"><div class="row"><b>Amount to pay</b><b>₹${t.tot}</b></div><input id="cn" placeholder="Name" value="${esc(me.name)}"><input id="cp" type="tel" placeholder="Phone" value="${esc(me.phone)}"><input id="ca" placeholder="Delivery address" value="${esc(addrNow())}"><select onchange="pay=this.value;render(true)"><option value="cod">Cash on Delivery</option><option value="upi" ${pay=="upi"?"selected":""}>UPI</option></select>`;
+let h=`${pgHd("Checkout","","tab='cart';render(true)")}<div class="card stack"><div class="row"><b>Amount to pay</b><b>₹${t.tot}</b></div><input id="cn" placeholder="Name" value="${esc(me.name)}"><input id="cp" type="tel" placeholder="Phone" value="${esc(me.phone)}"><input id="ca" placeholder="Delivery address" value="${esc(addrNow())}"><button class="b l w" onclick="getLoc()">📍 ${myLoc?"Location added ✓":"Add my current location (helps the rider find you)"}</button><select onchange="pay=this.value;render(true)"><option value="cod">Cash on Delivery</option><option value="upi" ${pay=="upi"?"selected":""}>UPI</option></select>`;
 if(pay=="upi")h+=`<div class="mu">UPI ID: <b>${esc(UPI_ID)}</b></div><a class="b" href="upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(STORE)}&am=${t.tot}&cu=INR">Pay ₹${t.tot} in UPI app</a><input id="cu" placeholder="UTR / transaction number after payment">`;
 return h+'<button class="b w" onclick="place()">Place order</button></div>'}
 const wishV=()=>{const r=live().filter(p=>wish.includes(p.id));return `<h2>❤️ My Wishlist</h2>`+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No wishlisted products yet. Tap the heart on any product.</p>')};
@@ -285,7 +287,7 @@ if(!n||p.length<10||!ad)return alert("Enter name, phone and address");
 if(pay=="upi"&&u.length<6)return alert("Enter the UPI transaction number");
 const items=Object.keys(cart).map(id=>{const x=products.find(y=>y.id==id);return{id,name:x.name,q:cart[id],price:x.price}});
 const T=tots(),total=T.tot;
-try{await db.collection("orders").add({uid:me.uid,name:n,phone:p,addr:ad,items,total,sub:T.sub,fee:T.fee,tax:T.tax,pay,utr:u,status:"pending",riderId:null,riderName:null,createdAt:TS()});cart={};if(me.addr!==ad){me.addr=ad;db.collection("users").doc(me.uid).update({addr:ad}).catch(()=>{})}tab="orders";render(true)}catch(e){alert(e.message)}}
+try{await db.collection("orders").add({uid:me.uid,name:n,phone:p,addr:ad,items,total,sub:T.sub,fee:T.fee,tax:T.tax,pay,utr:u,status:"pending",riderId:null,riderName:null,lat:myLoc?myLoc.lat:null,lng:myLoc?myLoc.lng:null,createdAt:TS()});cart={};if(me.addr!==ad){me.addr=ad;db.collection("users").doc(me.uid).update({addr:ad}).catch(()=>{})}tab="orders";render(true)}catch(e){alert(e.message)}}
 const oid=o=>"KB"+o.id.slice(-4).toUpperCase();
 const dt=o=>o.createdAt&&o.createdAt.seconds?new Date(o.createdAt.seconds*1000).toLocaleString([],{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}):"";
 const thumbs=o=>`<div class="th">${o.items.slice(0,4).map(i=>{const p=products.find(x=>x.id==i.id);return `<div>${p?img(p):'<div class="em">📦</div>'}</div>`}).join("")}</div>`;
@@ -295,7 +297,7 @@ const etaLine=o=>{if(o.status=="delivered"||o.status=="cancelled")return "";cons
 const pgHd=(t,r,b,sub)=>`<div class="ph"><button class="bk" onclick="${b||"tab='home';render(true)"}">‹</button><div class="tt"><b>${t}</b>${sub?`<div class="mu s2">${sub}</div>`:""}</div>${r||""}</div>`;
 const tm2=t=>new Date(t).toLocaleString([],{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"});
 const ordDate=o=>{if(!(o.createdAt&&o.createdAt.seconds))return "";const d=new Date(o.createdAt.seconds*1000),n=d.getDate(),s=(n%100>10&&n%100<14)||n%10>3?"th":["th","st","nd","rd"][n%10];return `${n}${s} ${d.toLocaleString("en-GB",{month:"short"})} ${d.getFullYear()}, ${d.toLocaleString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true}).toLowerCase()}`};
-const stTxt=o=>({pending:["Order placed","w"],assigned:["Rider assigned","w"],accepted:["Rider heading to store","w"],collected:["Out for delivery","w"],delivered:["Order delivered",""],cancelled:["Order cancelled","x"]}[o.status]||["Order placed","w"]);
+const stTxt=o=>({pending:["Order placed","w"],assigned:["Rider assigned","w"],accepted:["Rider heading to store","w"],collected:["Out for delivery","w"],arrived:["Rider arrived at your location","w"],delivered:["Order delivered",""],cancelled:["Order cancelled","x"]}[o.status]||["Order placed","w"]);
 const thumbs2=o=>`<div class="th2">${o.items.map(i=>{const p=products.find(x=>x.id==i.id);return `<div>${p?img(p):'<span style="font-size:26px">📦</span>'}</div>`}).join("")}</div>`;
 function oCard(o){const s=stTxt(o);return `<div class="card oc2"><div class="t row" onclick="openO('${o.id}')"><div><b style="font-size:17px">${s[0]}</b><span class="ok ${s[1]}">${s[1]=="x"?"✕":s[1]=="w"?"•":"✓"}</span><div class="mu s2" style="margin-top:4px">Placed at ${ordDate(o)}</div>${etaLine(o)}</div><span class="row" style="gap:10px"><b style="font-size:18px">₹${o.total}</b><button class="chev">›</button></span></div>${thumbs2(o)}<button class="ag" onclick="reorder('${o.id}')">Order Again</button></div>`}
 function myOrdersV(){const L=orders.slice().sort(byTime);return pgHd("Your Orders")+(L.map(oCard).join("")||'<p class="mu">No orders yet.</p>')}
@@ -309,7 +311,7 @@ const mrpT=o.items.reduce((a,i)=>{const p=products.find(x=>x.id==i.id);return a+
 return pgHd(`Order #${oid(o)} <button class="va" onclick="cp('${oid(o)}')">⧉</button>`,`<button class="b l" onclick="tab='help';render(true)">💬 Get Help</button>`,"tab='orders';render(true)",`${n} items`)
 +`<div class="card"><div class="ds"><div class="dk">${dn?"✓":"⏳"}</div><div style="flex:1"><b style="font-size:22px">${dn?"Delivered":s[0]}</b></div>${mins?`<div style="text-align:right" class="mu">Arrived in<div class="arr">⚡ ${mins} MINS</div></div>`:(!dn&&etaOf(o)?`<div style="text-align:right" class="mu">Arriving by<div class="arr">⚡ ${etaOf(o).by}</div></div>`:"")}</div></div>`
 +`<div class="card"><b>${n} items in order</b>${o.items.map(row).join("")}</div>`
-+`<div class="card stack"><b>🧾 Bill Summary</b><div class="row"><span>Item Total</span><span>${mrpT>sub?`<s class="mu">₹${mrpT}</s> `:""}₹${sub}</span></div>${o.fee?`<div class="row"><span>Delivery Fee</span><span>₹${o.fee}</span></div>`:""}${o.tax?`<div class="row"><span>Taxes &amp; Charges (GST)</span><span>₹${o.tax}</span></div>`:""}<div class="row" style="font-size:18px"><b>Total Bill</b><b>₹${o.total}</b></div><button class="b l w" onclick="invoice('${o.id}')">Download Invoice</button></div>`
++`<div class="card stack"><b>🧾 Bill Summary</b><div class="row"><span>Item Total</span><span>${mrpT>sub?`<s class="mu">₹${mrpT}</s> `:""}₹${sub}</span></div>${o.fee?`<div class="row"><span>Delivery Fee</span><span>₹${o.fee}</span></div>`:""}${o.tax?`<div class="row"><span>Taxes &amp; Charges (GST)</span><span>₹${o.tax}</span></div>`:""}<div class="row" style="font-size:18px"><b>Total Bill</b><b>₹${o.status=="delivered"&&o.finalTotal!=null?o.finalTotal:o.total}</b></div><button class="b l w" onclick="invoice('${o.id}')">Download Invoice</button></div>`
 +`<div class="card stack"><b>Order Details</b><div class="mu s2">Order ID</div><div>#${oid(o)}</div><div class="mu s2">Receiver Details</div><div>${esc(o.name)}, +91 ${esc(o.phone)}</div><div class="mu s2">Delivery Address</div><div>${esc(o.addr)}</div><div class="mu s2">Order Placed at</div><div>${dt(o)}</div>${dn&&o.deliveredAt&&o.deliveredAt.seconds?`<div class="mu s2">Order Arrived at</div><div>${tm2(o.deliveredAt.seconds*1000)}</div>`:""}<div class="mu s2">Payment</div><div>${o.pay=="upi"?"UPI":"Cash on Delivery"}</div></div>`
 +`<div class="card row" onclick="tab='help';render(true)"><span>💬 <b>Need help with this order?</b><div class="mu s2">Find your issue or reach out</div></span><span class="mu">›</span></div><div style="height:80px"></div><div class="fixb"><button class="cta" onclick="reorder('${o.id}')">Order Again</button></div>`}
 function invoice(id){const o=orders.find(x=>x.id==id),w=window.open("","_blank");if(!w)return alert("Please allow pop-ups to download the invoice.");
