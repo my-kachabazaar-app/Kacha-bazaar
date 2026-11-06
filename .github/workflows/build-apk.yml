@@ -16,18 +16,21 @@ jobs:
             url: https://my-kachabazaar-app.github.io/Kacha-bazaar/
             tag: ""
             color: "#12703f"
+            splash: 1800
           - key: admin
             appid: com.kachabazaar.admin
             appname: KB Admin
             url: https://my-kachabazaar-app.github.io/Kacha-bazaar/admin.html
             tag: ADMIN
             color: "#c62828"
+            splash: 1800
           - key: rider
             appid: com.kachabazaar.rider
-            appname: KB Rider
+            appname: KB PARTNER
             url: https://my-kachabazaar-app.github.io/Kacha-bazaar/rider.html
-            tag: RIDER
+            tag: ""
             color: "#1565c0"
+            splash: 0
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,6 +40,25 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+      - name: Pick the package name from google-services.json
+        run: |
+          python3 - <<'PY'
+          import json, os
+          names = [c["client_info"]["android_client_info"]["package_name"] for c in json.load(open("google-services.json"))["client"]]
+          print("Package names in google-services.json:", names)
+          want = "${{ matrix.appid }}"
+          if want not in names:
+              key = "${{ matrix.key }}"
+              pick = [n for n in names if n.endswith("." + key)]
+              if not pick and key == "customer":
+                  pick = [n for n in names if not n.endswith(".admin") and not n.endswith(".rider")]
+              if not pick:
+                  raise SystemExit("No package name for " + key + " in google-services.json. Add that Android app in Firebase and upload a new google-services.json.")
+              want = pick[0]
+          print("Using package name:", want)
+          with open(os.environ["GITHUB_ENV"], "a") as f:
+              f.write("APPID=" + want + "\n")
+          PY
       - name: Create the Capacitor project
         run: |
           mkdir app
@@ -47,12 +69,12 @@ jobs:
           echo "<!doctype html><title>${{ matrix.appname }}</title>" > www/index.html
           cat > capacitor.config.json <<JSON
           {
-            "appId": "${{ matrix.appid }}",
+            "appId": "$APPID",
             "appName": "${{ matrix.appname }}",
             "webDir": "www",
             "server": { "url": "${{ matrix.url }}", "androidScheme": "https" },
             "plugins": {
-              "SplashScreen": { "launchShowDuration": 1800, "launchAutoHide": true, "backgroundColor": "#FFFFFF", "androidScaleType": "CENTER_INSIDE", "showSpinner": false }
+              "SplashScreen": { "launchShowDuration": ${{ matrix.splash }}, "launchAutoHide": true, "backgroundColor": "#FFFFFF", "androidScaleType": "CENTER_INSIDE", "showSpinner": false }
             }
           }
           JSON
@@ -78,8 +100,8 @@ jobs:
               w = d.textlength(tag, font=f)
               d.text(((1024 - w) / 2, 830), tag, font=f, fill="white")
           icon.convert("RGB").save("app/assets/icon-only.png")
-          put(Image.new("RGBA", (1024, 1024), (0, 0, 0, 0)), 640).save("app/assets/icon-foreground.png")
-          Image.new("RGB", (1024, 1024), color if tag else "white").save("app/assets/icon-background.png")
+          put(Image.new("RGBA", (1024, 1024), (0, 0, 0, 0)), 740).save("app/assets/icon-foreground.png")
+          Image.new("RGB", (1024, 1024), "white").save("app/assets/icon-background.png")
           for name, bg in (("splash", "#ffffff"), ("splash-dark", "#0f1a13")):
               put(Image.new("RGBA", (2732, 2732), bg), 760).convert("RGB").save("app/assets/" + name + ".png")
           PY
@@ -89,7 +111,25 @@ jobs:
         run: |
           cd app
           cp ../google-services.json android/app/google-services.json
-          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
+          mkdir -p android/app/src/main/res/raw
+          python3 - <<'PY'
+          import wave, struct, math
+          rate = 22050
+          notes = [(880, 0.0), (1175, 0.22), (1568, 0.44), (1175, 0.76), (1568, 0.98)]
+          n = int(rate * 1.5)
+          w = wave.open("android/app/src/main/res/raw/kb_order.wav", "wb")
+          w.setnchannels(1); w.setsampwidth(2); w.setframerate(rate)
+          for i in range(n):
+              t = i / rate
+              v = 0.0
+              for f, s in notes:
+                  if t >= s:
+                      d = t - s
+                      v += math.sin(2 * math.pi * f * d) * math.exp(-d * 4.5) * 0.35
+              w.writeframes(struct.pack("<h", int(max(-1, min(1, v)) * 32000)))
+          w.close()
+          PY
           npx cap sync android
           cd android
           chmod +x gradlew
