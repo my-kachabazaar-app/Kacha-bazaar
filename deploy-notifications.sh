@@ -45,15 +45,22 @@ async function destroy(u){
   console.log("cloudinary destroy",pid,r.status);
 }
 const sweep=(b,a)=>{const keep=new Set(a?urlsOf(a):[]);return Promise.all(urlsOf(b).filter(u=>!keep.has(u)).map(destroy))};
-for(const [name,path] of [["products","products/{id}"],["categories","categories/{id}"],["riderMedia","riderMedia/{id}"],["files","files/{id}"],["kyc","users/{u}/kyc/{t}"],["settings","settings/{id}"]]){
+for(const [name,path] of [["products","products/{id}"],["categories","categories/{id}"],["riderMedia","riderMedia/{id}"],["files","files/{id}"],["kyc","users/{u}/kyc/{t}"],["settings","settings/{id}"],["users","users/{id}"]]){
   exports["cldDel_"+name]=onDocumentDeleted({document:path,region:R},e=>sweep(e.data.data(),null));
   exports["cldUpd_"+name]=onDocumentUpdated({document:path,region:R},e=>sweep(e.data.before.data(),e.data.after.data()));
 }
+exports.callCreated=onDocumentCreated({document:"calls/{id}",region:R},e=>{const c=e.data.data();return toUser(c.calleeUid,"📞 Incoming call",`${c.callerName||"Someone"} is calling you`,"kb_order")});
+exports.depositCreated=onDocumentCreated({document:"deposits/{id}",region:R},e=>{const d=e.data.data();return d.status==="pending"?toRole("admin","Deposit request 💵",`${d.riderName||"Rider"} · ₹${d.amount}`):null});
+exports.depositUpdated=onDocumentUpdated({document:"deposits/{id}",region:R},e=>{const b=e.data.before.data(),a=e.data.after.data();
+  if(b.status==="pending"&&a.status==="done")return toUser(a.riderId,"Deposit received ✅",`₹${a.amount} received by the store manager`);
+  if(b.status==="pending"&&a.status==="rejected")return toUser(a.riderId,"Deposit not accepted ❌",`Your ₹${a.amount} deposit was rejected. Please contact the store manager.`);
+  return null});
 exports.orderCreated=onDocumentCreated({document:"orders/{id}",region:R},e=>{const o=e.data.data();
   return Promise.all([toRole("admin","New order 🛒",`${o.name} · ₹${o.total} · ${o.pay==="upi"?"UPI":"COD"}`),toUser(o.uid,"Order placed ✅","We have received your order. Waiting for store confirmation.")])});
 exports.orderUpdated=onDocumentUpdated({document:"orders/{id}",region:R},e=>{
   const b=e.data.before.data(),a=e.data.after.data(),j=[];
-  if(!b.riderId&&a.riderId){j.push(toUser(a.riderId,"New order assigned 🛵",`${a.name} · ${a.addr}`,"kb_order"));j.push(toUser(a.uid,"Order confirmed ✅",a.eta?`Arriving in about ${a.eta} mins`:"Your order has been confirmed"))}
+  // Rider push notification is removed here as requested. Only user is notified.
+  if(!b.riderId&&a.riderId){j.push(toUser(a.uid,"Order confirmed ✅",a.eta?`Arriving in about ${a.eta} mins`:"Your order has been confirmed"))}
   else if(a.eta&&(a.eta!==b.eta||a.etaAt!==b.etaAt))j.push(toUser(a.uid,"Delivery time updated ⏱",`Now arriving in about ${a.eta} mins`));
   if(b.status!==a.status){
     const m={accepted:["Rider on the way 🛵","Your rider is heading to the store"],collected:["Out for delivery 📦","Your order has been picked up"],arrived:["Rider arrived 📍","Your rider has reached your location"],delivered:["Order delivered ✅","Thank you for ordering with us!"],cancelled:["Order cancelled","Your order was cancelled. Contact support if you need help."]}[a.status];
