@@ -59,8 +59,7 @@ exports.orderCreated=onDocumentCreated({document:"orders/{id}",region:R},e=>{con
   return Promise.all([toRole("admin","New order 🛒",`${o.name} · ₹${o.total} · ${o.pay==="upi"?"UPI":"COD"}`),toUser(o.uid,"Order placed ✅","We have received your order. Waiting for store confirmation.")])});
 exports.orderUpdated=onDocumentUpdated({document:"orders/{id}",region:R},e=>{
   const b=e.data.before.data(),a=e.data.after.data(),j=[];
-  // Rider push notification is removed here as requested. Only user is notified.
-  if(!b.riderId&&a.riderId){j.push(toUser(a.uid,"Order confirmed ✅",a.eta?`Arriving in about ${a.eta} mins`:"Your order has been confirmed"))}
+  if(!b.riderId&&a.riderId){j.push(toUser(a.riderId,"New order assigned 🛵",`${a.name} · ${a.addr}`,"kb_order"));j.push(toUser(a.uid,"Order confirmed ✅",a.eta?`Arriving in about ${a.eta} mins`:"Your order has been confirmed"))}
   else if(a.eta&&(a.eta!==b.eta||a.etaAt!==b.etaAt))j.push(toUser(a.uid,"Delivery time updated ⏱",`Now arriving in about ${a.eta} mins`));
   if(b.status!==a.status){
     const m={accepted:["Rider on the way 🛵","Your rider is heading to the store"],collected:["Out for delivery 📦","Your order has been picked up"],arrived:["Rider arrived 📍","Your rider has reached your location"],delivered:["Order delivered ✅","Thank you for ordering with us!"],cancelled:["Order cancelled","Your order was cancelled. Contact support if you need help."]}[a.status];

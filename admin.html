@@ -108,40 +108,7 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(
 if(firebaseConfig.apiKey.startsWith("YOUR")){document.getElementById("app").innerHTML='<div class="card"><b>Setup pending</b><p>Add your firebaseConfig in index.html.</p></div>';throw new Error("config missing")}
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();
-
 let me=null,unsubs=[],products=[],orders=[],riders=[],tab="dash",signing=false,showAuth=false,after="",catImg={},pPhoto="";
-
-// --- Nav Route Logic ---
-let lastNav="";
-const NATIVE_BACK=!!(window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App&&Capacitor.Plugins.App.addListener);
-function pushNav(){
-  const curr={tab,aq,ofl,tkA,addOpen};const k=JSON.stringify(curr);if(k===lastNav)return;
-  if(lastNav)window.STACK=(window.STACK||[]); window.STACK.push(JSON.parse(lastNav));
-  lastNav=k;if(!NATIVE_BACK){try{history.pushState(curr,"")}catch(e){}}
-}
-function backNav(){
-  let p=document.getElementById("pop");
-  if(p && p.style.display=="block"){p.style.display="none";return true;}
-  if(window.STACK&&window.STACK.length>0){
-    const s=window.STACK.pop();lastNav=JSON.stringify(s);
-    tab=s.tab;aq=s.aq;ofl=s.ofl||"all";tkA=s.tkA||"";addOpen=s.addOpen||false;render(false);return true
-  }
-  if(tab!="dash"){tab="dash";aq="";ofl="all";tkA="";addOpen=false;render(true);return true}
-  return false
-}
-if(NATIVE_BACK)Capacitor.Plugins.App.addListener("backButton",function(){if(!backNav())Capacitor.Plugins.App.exitApp()});
-if(window.addEventListener)window.addEventListener("popstate",function(e){
-  if(NATIVE_BACK)return;
-  let p=document.getElementById("pop");
-  if(p && p.style.display=="block"){p.style.display="none";try{history.pushState({tab,aq,ofl,tkA,addOpen},"")}catch(x){}return;}
-  const s=e.state;
-  if(s){
-    window.STACK=(window.STACK||[]);window.STACK.pop();lastNav=JSON.stringify(s);
-    tab=s.tab;aq=s.aq;ofl=s.ofl||"all";tkA=s.tkA||"";addOpen=s.addOpen||false;render(false);
-  }else if(tab!="dash"){tab="dash";render(true)}
-});
-// -----------------------
-
 function stop(){unsubs.forEach(u=>u());unsubs=[]}
 function ping(m){try{navigator.vibrate&&navigator.vibrate([200,100,200]);if(window.Notification&&Notification.permission==="granted")new Notification(m)}catch(e){}}
 function soft(){const e=document.activeElement;if(e&&/INPUT|SELECT/.test(e.tagName))return;render()}
@@ -284,7 +251,7 @@ if(t)return `<button class="b l" onclick="tkA='';render(true)">← Back</button>
 return tickets.slice().sort(byTime).map(t=>`<div class="card row" onclick="tkA='${t.id}';render(true)"><span><b>${esc(t.subject)}</b><div class="mu s2">${esc(t.riderName)} · ${esc(t.riderCode)}</div></span>${tg2(t)}</div>`).join("")||'<p class="mu">No tickets.</p>'}
 function arep(id){const x=$("#ar").value.trim();if(!x)return;db.collection("tickets").doc(id).update({msgs:firebase.firestore.FieldValue.arrayUnion({from:"admin",text:x,at:Date.now()})}).then(()=>{$("#ar").value=""}).catch(e=>alert(e.message))}
 function tset(id,s){db.collection("tickets").doc(id).update({status:s}).catch(e=>alert(e.message))}
-function pop(h){let p=document.getElementById("pop");if(!p){p=document.createElement("div");p.id="pop";document.body.appendChild(p)}p.innerHTML=`<div class="pb2" onclick="if(event.target==this)this.parentNode.style.display='none'"><div class="pc2">${h}<button class="b w" onclick="document.getElementById('pop').style.display='none'">Close</button></div></div>`;p.style.display="block";pushNav();}
+function pop(h){let p=document.getElementById("pop");if(!p){p=document.createElement("div");p.id="pop";document.body.appendChild(p)}p.innerHTML=`<div class="pb2" onclick="if(event.target==this)this.parentNode.style.display='none'"><div class="pc2">${h}<button class="b w" onclick="document.getElementById('pop').style.display='none'">Close</button></div></div>`;p.style.display="block"}
 function notifV(){return `<div class="card stack"><b>Send a notification to phones</b><select id="nt"><option value="customer">All customers</option><option value="rider">All riders</option><option value="all">Everyone</option></select><input id="nti" placeholder="Title"><input id="nb" placeholder="Message"><button class="b w" onclick="sendN()">Send</button><div class="mu s2">Order, delivery time, ticket and approval notifications are sent automatically.</div></div>`}
 function sendN(){const t=$("#nti").value.trim(),b=$("#nb").value.trim();if(!t||!b)return alert("Enter a title and a message");if(!confirm("Send this notification now?"))return;db.collection("broadcasts").add({to:$("#nt").value,title:t,body:b,at:Date.now()}).then(()=>{alert("Sent");$("#nti").value="";$("#nb").value=""}).catch(e=>alert(e.message))}
 var rmedia=[];
@@ -307,9 +274,7 @@ const a=$("#app"),top=$("#top");
 if(!me){top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="tag">ADMIN</span></div>`;return swap(a,authV())}
 const tabs=[["dash","Dashboard"],["orders","Orders"],["products","Products"],["cats","Categories"],["riders","Riders"],["tix","Tickets"],["returns","Returns"],["deposits","Deposits"],["notify","Notify"],["rset","Rider setup"],["set","Settings"]];
 top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="mu">${esc(me.name)} <button class="b l" onclick="auth.signOut()">Logout</button></span></div><div class="tabs">${tabs.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="aq='';tab='${t[0]}';render(true)">${t[1]}</button>`).join("")}</div>`;
-swap(a,adminV());
-if(force)pushNav();
-}
+swap(a,adminV())}
 </script>
 </body>
 </html>
