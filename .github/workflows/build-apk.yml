@@ -64,7 +64,7 @@ jobs:
           mkdir app
           cd app
           npm init -y
-          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/push-notifications@6 @capacitor/splash-screen@6
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/push-notifications@6 @capacitor/splash-screen@6 @capacitor/app@6
           mkdir www
           echo "<!doctype html><title>${{ matrix.appname }}</title>" > www/index.html
           cat > capacitor.config.json <<JSON
@@ -111,24 +111,58 @@ jobs:
         run: |
           cd app
           cp ../google-services.json android/app/google-services.json
-          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
           mkdir -p android/app/src/main/res/raw
           python3 - <<'PY'
           import wave, struct, math
           rate = 22050
-          notes = [(880, 0.0), (1175, 0.22), (1568, 0.44), (1175, 0.76), (1568, 0.98)]
-          n = int(rate * 1.5)
           w = wave.open("android/app/src/main/res/raw/kb_order.wav", "wb")
           w.setnchannels(1); w.setsampwidth(2); w.setframerate(rate)
-          for i in range(n):
-              t = i / rate
+          period = 3.0
+          for i in range(int(rate * 24)):
+              t = (i / rate) % period
+              on = (0 <= t < 0.5) or (0.7 <= t < 1.2)
               v = 0.0
-              for f, s in notes:
-                  if t >= s:
-                      d = t - s
-                      v += math.sin(2 * math.pi * f * d) * math.exp(-d * 4.5) * 0.35
-              w.writeframes(struct.pack("<h", int(max(-1, min(1, v)) * 32000)))
+              if on:
+                  tt = t if t < 0.5 else t - 0.7
+                  f = 1318.0 if int(tt / 0.05) % 2 else 988.0
+                  v = 0.95 * math.sin(2 * math.pi * f * (i / rate))
+              w.writeframes(struct.pack("<h", int(v * 32000)))
           w.close()
+          import glob, os
+          p = glob.glob("android/app/src/main/java/**/MainActivity.java", recursive=True)[0]
+          pkg = os.environ["APPID"]
+          src = """package PKG;
+
+          import android.app.NotificationChannel;
+          import android.app.NotificationManager;
+          import android.media.AudioAttributes;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  if (Build.VERSION.SDK_INT >= 26) {
+                      NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                      Uri sound = Uri.parse("android.resource://" + getPackageName() + "/raw/kb_order");
+                      AudioAttributes attrs = new AudioAttributes.Builder()
+                          .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                          .setContentType(AudioAttributes.CONTENT_TYPE_SONIC).build();
+                      NotificationChannel ch = new NotificationChannel("kb_order", "New order alerts", NotificationManager.IMPORTANCE_HIGH);
+                      ch.setSound(sound, attrs);
+                      ch.enableVibration(true);
+                      ch.setVibrationPattern(new long[]{0, 800, 400, 800, 400, 800});
+                      ch.setLockscreenVisibility(1);
+                      nm.createNotificationChannel(ch);
+                  }
+              }
+          }
+          """.replace("PKG", pkg)
+          open(p, "w").write(src)
           PY
           npx cap sync android
           cd android
