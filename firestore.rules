@@ -2,32 +2,118 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function role() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; }
-    function isAdmin() { return signedIn() && role() == 'admin'; }
+    function userDoc(u) { return get(/databases/$(database)/documents/users/$(u)).data; }
+    function isAdmin() { return signedIn() && userDoc(request.auth.uid).role == 'admin'; }
+    function riderPay() {
+      let p = /databases/$(database)/documents/settings/rider;
+      return exists(p)
+        ? get(p).data.get('pay', 0)
+          + (get(p).data.get('surgeOn', false) ? get(p).data.get('surge', 0) : 0)
+          + (get(p).data.get('rainOn', false) ? get(p).data.get('rain', 0) : 0)
+        : 0;
+    }
+
+    function callOk(oid, who, callee) {
+      let o = get(/databases/$(database)/documents/orders/$(oid)).data;
+      return who == 'rider'
+        ? (o.riderId == request.auth.uid && o.uid == callee && !(o.status in ['delivered', 'cancelled']))
+        : (o.uid == request.auth.uid && o.riderId == callee
+            && (!(o.status in ['delivered', 'cancelled'])
+              || request.time < (o.status == 'delivered' ? o.deliveredAt : o.cancelledAt) + duration.value(1, 'h')));
+    }
 
     match /users/{u} {
+      allow delete: if signedIn() && request.auth.uid == u;
       allow read: if signedIn() && (request.auth.uid == u || isAdmin());
       allow create: if signedIn() && request.auth.uid == u
-        && request.resource.data.role in ['customer', 'rider'];
-      allow update: if signedIn() && request.auth.uid == u
-        && request.resource.data.role == resource.data.role;
+        && (request.resource.data.role == 'customer'
+          || (request.resource.data.role == 'rider' && request.resource.data.get('approved', false) == false));
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == u
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.get('riderCode', '') == resource.data.get('riderCode', '')
+        && request.resource.data.get('approved', false) == resource.data.get('approved', false));
+    }
+    match /users/{u}/kyc/{t} {
+      allow read: if signedIn() && (request.auth.uid == u || isAdmin());
+      allow write: if signedIn() && request.auth.uid == u
+        && !userDoc(u).get('approved', false);
     }
     match /lookup/{k} {
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
       allow get: if true;
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
-        && request.resource.data.email == request.auth.token.email;
+        && request.resource.data.email == request.auth.token.email
+        && (k == request.auth.token.email || k == userDoc(request.auth.uid).phone || k == 'r_' + userDoc(request.auth.uid).phone);
     }
     match /products/{p} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /categories/{c} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /settings/{k} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /riderMedia/{m} {
       allow read: if signedIn();
       allow write: if isAdmin();
     }
+    match /files/{f} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /counters/{c} {
+      allow read, write: if isAdmin();
+    }
+    match /deposits/{d} {
+      allow read: if signedIn() && (isAdmin() || resource.data.riderId == request.auth.uid);
+      allow create: if isAdmin() || (signedIn() && request.resource.data.riderId == request.auth.uid
+        && request.resource.data.status == 'pending' && request.resource.data.amount > 0);
+      allow update: if isAdmin();
+    }
+    match /tickets/{t} {
+      allow create: if signedIn() && request.resource.data.riderId == request.auth.uid
+        && request.resource.data.status == 'open'
+        && request.resource.data.msgs.size() == 1;
+      allow read: if signedIn() && (isAdmin() || resource.data.riderId == request.auth.uid);
+      allow update: if isAdmin() || (signedIn() && resource.data.riderId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['msgs', 'status'])
+        && request.resource.data.status == 'open'
+        && request.resource.data.msgs.size() == resource.data.msgs.size() + 1);
+    }
+    match /tokens/{t} {
+      allow create, update: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.role == userDoc(request.auth.uid).role;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+    match /broadcasts/{b} {
+      allow create, read: if isAdmin();
+    }
+    match /calls/{c} {
+      allow create: if signedIn() && request.resource.data.callerUid == request.auth.uid
+        && callOk(request.resource.data.orderId, request.resource.data.caller, request.resource.data.calleeUid);
+      allow read, update, delete: if signedIn() && (resource.data.callerUid == request.auth.uid || resource.data.calleeUid == request.auth.uid);
+      match /ice/{i} {
+        allow create, read, delete: if signedIn() && (get(/databases/$(database)/documents/calls/$(c)).data.callerUid == request.auth.uid
+          || get(/databases/$(database)/documents/calls/$(c)).data.calleeUid == request.auth.uid);
+      }
+    }
     match /orders/{o} {
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
-        && request.resource.data.status == 'pending';
+        && request.resource.data.status == 'pending'
+        && request.resource.data.riderId == null;
       allow read: if signedIn() && (isAdmin() || resource.data.uid == request.auth.uid
-        || resource.data.riderId == request.auth.uid);
+        || (resource.data.riderId == request.auth.uid && request.auth.token.email_verified == true));
       allow update: if isAdmin() || (signedIn() && resource.data.riderId == request.auth.uid
-        && request.resource.data.riderId == resource.data.riderId);
+        && request.auth.token.email_verified == true
+        && !(resource.data.status in ['delivered', 'cancelled'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'collectedAt', 'arrivedAt', 'deliveredAt', 'cancelledAt', 'cancelReason', 'earn', 'finalTotal', 'flags', 'returnPending'])
+        && request.resource.data.status in ['collected', 'arrived', 'delivered', 'cancelled']
+        && (request.resource.data.status != 'delivered'
+          || (request.resource.data.earn == riderPay() && request.resource.data.deliveredAt == request.time)));
     }
   }
 }
