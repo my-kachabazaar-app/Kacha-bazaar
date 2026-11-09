@@ -108,7 +108,40 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(
 if(firebaseConfig.apiKey.startsWith("YOUR")){document.getElementById("app").innerHTML='<div class="card"><b>Setup pending</b><p>Add your firebaseConfig in index.html.</p></div>';throw new Error("config missing")}
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore(),TS=()=>firebase.firestore.FieldValue.serverTimestamp();
+
 let me=null,unsubs=[],products=[],orders=[],riders=[],tab="dash",signing=false,showAuth=false,after="",catImg={},pPhoto="";
+
+// --- Nav Route Logic ---
+let lastNav="";
+const NATIVE_BACK=!!(window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App&&Capacitor.Plugins.App.addListener);
+function pushNav(){
+  const curr={tab,aq,ofl,tkA,addOpen};const k=JSON.stringify(curr);if(k===lastNav)return;
+  if(lastNav)window.STACK=(window.STACK||[]); window.STACK.push(JSON.parse(lastNav));
+  lastNav=k;if(!NATIVE_BACK){try{history.pushState(curr,"")}catch(e){}}
+}
+function backNav(){
+  let p=document.getElementById("pop");
+  if(p && p.style.display=="block"){p.style.display="none";return true;}
+  if(window.STACK&&window.STACK.length>0){
+    const s=window.STACK.pop();lastNav=JSON.stringify(s);
+    tab=s.tab;aq=s.aq;ofl=s.ofl||"all";tkA=s.tkA||"";addOpen=s.addOpen||false;render(false);return true
+  }
+  if(tab!="dash"){tab="dash";aq="";ofl="all";tkA="";addOpen=false;render(true);return true}
+  return false
+}
+if(NATIVE_BACK)Capacitor.Plugins.App.addListener("backButton",function(){if(!backNav())Capacitor.Plugins.App.exitApp()});
+if(window.addEventListener)window.addEventListener("popstate",function(e){
+  if(NATIVE_BACK)return;
+  let p=document.getElementById("pop");
+  if(p && p.style.display=="block"){p.style.display="none";try{history.pushState({tab,aq,ofl,tkA,addOpen},"")}catch(x){}return;}
+  const s=e.state;
+  if(s){
+    window.STACK=(window.STACK||[]);window.STACK.pop();lastNav=JSON.stringify(s);
+    tab=s.tab;aq=s.aq;ofl=s.ofl||"all";tkA=s.tkA||"";addOpen=s.addOpen||false;render(false);
+  }else if(tab!="dash"){tab="dash";render(true)}
+});
+// -----------------------
+
 function stop(){unsubs.forEach(u=>u());unsubs=[]}
 function ping(m){try{navigator.vibrate&&navigator.vibrate([200,100,200]);if(window.Notification&&Notification.permission==="granted")new Notification(m)}catch(e){}}
 function soft(){const e=document.activeElement;if(e&&/INPUT|SELECT/.test(e.tagName))return;render()}
@@ -210,14 +243,14 @@ const prodForm=()=>`<div class="card stack"><input id="pn" placeholder="Product 
 function prodList(){const k=aq.trim().toLowerCase();return products.filter(p=>!k||p.name.toLowerCase().includes(k)).map(p=>`<div class="card stack"><div class="ci">${img(p)}<div style="flex:1"><b>${esc(p.name)}</b><div class="mu s2">₹${p.price}${p.mrp>p.price?" (MRP ₹"+p.mrp+")":""} · Stock ${p.stock}</div><select onchange="setCatP('${p.id}',this.value)"><option value="">Category…</option>${CATS.map(c=>`<option ${p.cat==c[0]?"selected":""}>${esc(c[0])}</option>`).join("")}</select></div></div><div>${SECS.map(x=>`<button class="chip ${inSec(p,x[0])?"on":""}" onclick="tg('${p.id}','${x[0]}')">${x[1]}</button>`).join("")}</div><div class="row"><button class="b l" onclick="editProd('${p.id}')">✏️ Edit</button><button class="b l" onclick="setPimg('${p.id}')">Photo</button><button class="b l" onclick="stk('${p.id}')">Stock</button><button class="b l" onclick="delP('${p.id}')">Delete</button></div></div>`).join("")||'<p class="mu">No products.</p>'}
 function editProd(id){const p=products.find(x=>x.id==id),n=prompt("Name",p.name);if(n===null)return;const pr=prompt("Price ₹",p.price);if(pr===null)return;const m=prompt("Old price (MRP) ₹, 0 = none",p.mrp||0);if(m===null)return;db.collection("products").doc(id).update({name:n.trim()||p.name,price:+pr||p.price,mrp:+m||0}).catch(e=>alert(e.message))}
 function setCatP(id,v){if(v)db.collection("products").doc(id).update({cat:v}).catch(e=>alert(e.message))}
-function ridV(){return riders.map(r=>{const m=orders.filter(o=>o.riderId==r.id),a=m.filter(o=>ACTIVE.includes(o.status)).length,d=m.filter(o=>o.status=="delivered").length,cod=m.filter(o=>o.status=="delivered"&&o.pay=="cod").reduce((s,o)=>s+(o.finalTotal!=null?o.finalTotal:o.total),0),dep=deps.filter(x=>x.riderId==r.id).reduce((s,x)=>s+(+x.amount||0),0),st=r.approved?(!r.available?"Offline":busy(r)?"Busy":"Online"):(r.kyc=="submitted"?"KYC submitted":"Documents pending");
+function ridV(){return riders.map(r=>{const m=orders.filter(o=>o.riderId==r.id),a=m.filter(o=>ACTIVE.includes(o.status)).length,d=m.filter(o=>o.status=="delivered").length,cod=m.filter(o=>o.status=="delivered"&&o.pay=="cod").reduce((s,o)=>s+(o.finalTotal!=null?o.finalTotal:o.total),0),dep=deps.filter(x=>x.riderId==r.id&&x.status!=="pending"&&x.status!=="rejected").reduce((s,x)=>s+(+x.amount||0),0),st=r.approved?(!r.available?"Offline":busy(r)?"Busy":"Online"):(r.kyc=="submitted"?"KYC submitted":"Documents pending");
 return `<div class="card stack"><div class="row"><b>${esc(r.name)} <span class="mu s2">${esc(r.riderCode||"")}</span></b><span class="tag">${st}</span></div><div class="mu"><a href="tel:${esc(r.phone)}">${esc(r.phone)}</a> · Active ${a} · Delivered ${d}${r.approved?` · Cash held ₹${Math.max(0,cod-dep)}`:""}</div><div class="row"><button class="b l" style="flex:1" onclick="viewKyc('${r.id}')">Documents</button>`+(r.approved?`<button class="b l" style="flex:1" onclick="deposit('${r.id}')">Record deposit</button><button class="b l" style="flex:1" onclick="appr('${r.id}',false)">Revoke</button>`:`<button class="b" style="flex:1" onclick="approve('${r.id}')">Approve</button>`)+`</div></div>`}).join("")||'<p class="mu">No riders yet.</p>'}
 function appr(id,v){db.collection("users").doc(id).update({approved:v}).catch(e=>alert(e.message))}
 const setV=()=>`<div class="card stack"><b>Store settings</b><label class="mu">Delivery fee ₹</label><input id="st_fee" type="number" value="${DELIVERY_FEE}"><label class="mu">GST / tax %</label><input id="st_tax" type="number" value="${TAX_PCT}"><label class="mu">UPI ID (for payments)</label><input id="st_upi" value="${esc(UPI_ID)}"><label class="mu">Support phone</label><input id="st_ph" type="tel" value="${esc(SUPPORT_PHONE)}"><label class="mu">Support email</label><input id="st_em" type="email" value="${esc(SUPPORT_EMAIL)}"><button class="b w" onclick="saveSet()">Save settings</button></div>`;
 async function saveSet(){const c={deliveryFee:+$("#st_fee").value||0,taxPct:+$("#st_tax").value||0,upiId:$("#st_upi").value.trim(),supportPhone:$("#st_ph").value.trim(),supportEmail:$("#st_em").value.trim()};try{await db.collection("settings").doc("store").set(c);alert("Saved")}catch(e){alert(e.message)}}
 function aS(v){aq=v;$("#ares").innerHTML=tab=="orders"?ordList():prodList()}
 function adminV(){
-if(tab=="returns")return retAV();if(tab=="notify")return notifV();if(tab=="rset")return rsetV();if(tab=="tix")return tixV();if(tab=="dash")return dashV();
+if(tab=="deposits")return depAV();if(tab=="returns")return retAV();if(tab=="notify")return notifV();if(tab=="rset")return rsetV();if(tab=="tix")return tixV();if(tab=="dash")return dashV();
 if(tab=="riders")return ridV();
 if(tab=="set")return setV();
 if(tab=="cats")return CATS.map((c,i)=>`<div class="card row"><span class="row" style="gap:10px;justify-content:flex-start"><span class="ct s" style="background:${c[2]}">${catPic(i)}</span>${esc(c[0])}</span><span><button class="b l" onclick="setCat(${i})">Image</button>${catImg["c"+i]?` <button class="b l" onclick="clrCat(${i})">Reset</button>`:""}</span></div>`).join("");
@@ -251,7 +284,7 @@ if(t)return `<button class="b l" onclick="tkA='';render(true)">← Back</button>
 return tickets.slice().sort(byTime).map(t=>`<div class="card row" onclick="tkA='${t.id}';render(true)"><span><b>${esc(t.subject)}</b><div class="mu s2">${esc(t.riderName)} · ${esc(t.riderCode)}</div></span>${tg2(t)}</div>`).join("")||'<p class="mu">No tickets.</p>'}
 function arep(id){const x=$("#ar").value.trim();if(!x)return;db.collection("tickets").doc(id).update({msgs:firebase.firestore.FieldValue.arrayUnion({from:"admin",text:x,at:Date.now()})}).then(()=>{$("#ar").value=""}).catch(e=>alert(e.message))}
 function tset(id,s){db.collection("tickets").doc(id).update({status:s}).catch(e=>alert(e.message))}
-function pop(h){let p=document.getElementById("pop");if(!p){p=document.createElement("div");p.id="pop";document.body.appendChild(p)}p.innerHTML=`<div class="pb2" onclick="if(event.target==this)this.parentNode.style.display='none'"><div class="pc2">${h}<button class="b w" onclick="document.getElementById('pop').style.display='none'">Close</button></div></div>`;p.style.display="block"}
+function pop(h){let p=document.getElementById("pop");if(!p){p=document.createElement("div");p.id="pop";document.body.appendChild(p)}p.innerHTML=`<div class="pb2" onclick="if(event.target==this)this.parentNode.style.display='none'"><div class="pc2">${h}<button class="b w" onclick="document.getElementById('pop').style.display='none'">Close</button></div></div>`;p.style.display="block";pushNav();}
 function notifV(){return `<div class="card stack"><b>Send a notification to phones</b><select id="nt"><option value="customer">All customers</option><option value="rider">All riders</option><option value="all">Everyone</option></select><input id="nti" placeholder="Title"><input id="nb" placeholder="Message"><button class="b w" onclick="sendN()">Send</button><div class="mu s2">Order, delivery time, ticket and approval notifications are sent automatically.</div></div>`}
 function sendN(){const t=$("#nti").value.trim(),b=$("#nb").value.trim();if(!t||!b)return alert("Enter a title and a message");if(!confirm("Send this notification now?"))return;db.collection("broadcasts").add({to:$("#nt").value,title:t,body:b,at:Date.now()}).then(()=>{alert("Sent");$("#nti").value="";$("#nb").value=""}).catch(e=>alert(e.message))}
 var rmedia=[];
@@ -262,15 +295,21 @@ function delMedia(id){if(confirm("Delete this image? It will also be removed fro
 function myLoc(){navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{$("#rlc").value=p.coords.latitude.toFixed(6)+","+p.coords.longitude.toFixed(6)},e=>alert("Could not get location: "+e.message)):alert("Location is not available")}
 const RS2={missing:"Missing",damage:"Damage",customer_cancel:"Customer cancelled"},CRL2={not_responding:"Not responding call",customer_cancel:"Customer cancelled",rider_problem:"Rider problem"};
 function retAV(){const L=orders.filter(o=>o.returnPending).sort(byTime);return L.map(o=>{const it=o.status=="cancelled"?o.items.map(i=>i.name+" × "+i.q+" — "+(CRL2[o.cancelReason]||"Cancelled")):o.items.map((i,x)=>o.flags&&o.flags[x]?i.name+" × "+i.q+" — "+(RS2[o.flags[x]]||""):null).filter(Boolean);return `<div class="card stack"><div class="row"><b>#${oid(o)} · ${esc(o.riderName||"")}</b><span class="tag">${o.status=="cancelled"?"Cancelled":"Partial"}</span></div><div class="mu s2">${it.map(esc).join("<br>")}</div><button class="b w" onclick="recv('${o.id}')">Mark received at store</button></div>`}).join("")||'<p class="mu">Nothing to receive back from riders.</p>'}
+function depAV(){const P=deps.filter(d=>d.status==="pending").sort((a,b)=>(b.at||0)-(a.at||0));
+return P.map(d=>`<div class="card stack"><div class="row"><b>${esc(d.riderName||"")} <span class="mu s2">${esc(d.riderCode||"")}</span></b><b>₹${d.amount}</b></div><div class="mu s2">${new Date(d.at).toLocaleString([],{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</div><div class="row"><button class="b" style="flex:1" onclick="depOk('${d.id}')">Confirm received</button><button class="b l" style="flex:1" onclick="depNo('${d.id}')">Reject</button></div></div>`).join("")||'<p class="mu">No deposit requests waiting.</p>'}
+function depOk(id){db.collection("deposits").doc(id).update({status:"done",confirmedAt:Date.now()}).catch(e=>alert(e.message))}
+function depNo(id){if(confirm("Reject this deposit request?"))db.collection("deposits").doc(id).update({status:"rejected"}).catch(e=>alert(e.message))}
 function recv(id){db.collection("orders").doc(id).update({returnPending:false,returnedAt:TS()}).catch(e=>alert(e.message))}
 function setStorePhoto(){pickImg(400,d=>db.collection("settings").doc("rider").set({storePhoto:d},{merge:true}).catch(e=>alert(e.message)))}
 function swap(a,html){const k={};a.querySelectorAll("input[id]").forEach(e=>{if(e.type!="password")k[e.id]=e.value});a.innerHTML=html;Object.keys(k).forEach(i=>{const e=document.getElementById(i);if(e&&k[i]!==""&&e.type!="checkbox")e.value=k[i]})}
 function render(force){
 const a=$("#app"),top=$("#top");
 if(!me){top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="tag">ADMIN</span></div>`;return swap(a,authV())}
-const tabs=[["dash","Dashboard"],["orders","Orders"],["products","Products"],["cats","Categories"],["riders","Riders"],["tix","Tickets"],["returns","Returns"],["notify","Notify"],["rset","Rider setup"],["set","Settings"]];
+const tabs=[["dash","Dashboard"],["orders","Orders"],["products","Products"],["cats","Categories"],["riders","Riders"],["tix","Tickets"],["returns","Returns"],["deposits","Deposits"],["notify","Notify"],["rset","Rider setup"],["set","Settings"]];
 top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="mu">${esc(me.name)} <button class="b l" onclick="auth.signOut()">Logout</button></span></div><div class="tabs">${tabs.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="aq='';tab='${t[0]}';render(true)">${t[1]}</button>`).join("")}</div>`;
-swap(a,adminV())}
+swap(a,adminV());
+if(force)pushNav();
+}
 </script>
 </body>
 </html>
