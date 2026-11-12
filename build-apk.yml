@@ -151,7 +151,7 @@ jobs:
                       Uri sound = Uri.parse("android.resource://" + getPackageName() + "/raw/kb_order");
                       AudioAttributes attrs = new AudioAttributes.Builder()
                           .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                          .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
+                          .setContentType(AudioAttributes.CONTENT_TYPE_SONIC).build();
                       NotificationChannel ch = new NotificationChannel("kb_order", "New order alerts", NotificationManager.IMPORTANCE_HIGH);
                       ch.setSound(sound, attrs);
                       ch.enableVibration(true);

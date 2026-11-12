@@ -276,5 +276,6 @@ const tabs=[["dash","Dashboard"],["orders","Orders"],["products","Products"],["c
 top.innerHTML=`<div class="row"><b class="logo">${LOGO}</b><span class="mu">${esc(me.name)} <button class="b l" onclick="auth.signOut()">Logout</button></span></div><div class="tabs">${tabs.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="aq='';tab='${t[0]}';render(true)">${t[1]}</button>`).join("")}</div>`;
 swap(a,adminV())}
 </script>
+<script src="admin-pro.js"></script>
 </body>
 </html>
