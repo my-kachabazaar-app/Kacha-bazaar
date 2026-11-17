@@ -151,7 +151,9 @@ async function boot(u){
 const d=await db.collection("users").doc(u.uid).get();
 if(!d.exists){alert("Profile not found");return auth.signOut()}
 if(d.data().role!="customer"){alert("This is the customer app. Staff: please use your admin or rider link.");return auth.signOut()}
-me=Object.assign({uid:u.uid},d.data());wish=me.wish||[];window.kbPush&&kbPush(db,u.uid,me.role);window.KBCALL&&KBCALL.init(db,u.uid,"customer",me.name);showAuth=false;tab=after||"home";after="";
+if(d.data().blocked){alert("Your account has been blocked. Please contact support.");return auth.signOut()}
+me=Object.assign({uid:u.uid},d.data());wish=me.wish||[];window.kbPush&&kbPush(db,u.uid,me.role);window.KBCALL&&KBCALL.init(db,u.uid,"customer",me.name);
+if(!window._hb){window._hb=setInterval(function(){if(me)db.collection("users").doc(me.uid).update({lastSeen:Date.now()}).catch(function(){})},60000);db.collection("users").doc(u.uid).update({lastSeen:Date.now()}).catch(function(){});db.collection("homeBanners").onSnapshot(function(s){hbn=[];s.forEach(function(d){hbn.push(Object.assign({id:d.id},d.data()))});soft()},function(){});db.collection("settings").doc("catalog").onSnapshot(function(x){if(x.exists){var c=x.data();if(c.cats&&c.cats.length)CATS=c.cats;if(c.secs&&c.secs.length)SECS=c.secs}soft()},function(){});db.collection("settings").doc("store").onSnapshot(function(x){var c=x.data()||{};FREE_ABOVE=+c.freeAbove||0;MINS={n:+c.minNew||0,a:+c.minActive||0,i7:+c.minIn7||0,i30:+c.minIn30||0};soft()},function(){})}showAuth=false;tab=after||"home";after="";
 const O=db.collection("orders");
 if(me.role=="customer")listen(O.where("uid","==",me.uid),a=>orders=a);
 if(window.Notification&&Notification.permission==="default")Notification.requestPermission();
@@ -201,7 +203,8 @@ const byTime=(a,b)=>((b.createdAt&&b.createdAt.seconds)||9e9)-((a.createdAt&&a.c
 const busy=r=>orders.some(o=>o.riderId==r.id&&ACTIVE.includes(o.status));
 const free=r=>r.available&&!busy(r);
 
-const CATS=[["Vegetables & Fruits","🥦","#f7c6cc"],["Fresh Meat & Seafood","🍗","#f7c6cc"],["Dairy & Eggs","🥛","#bfdcf7"],["Bakery & Biscuits","🍞","#f6dcc2"],["Snacks & Munchies","🍪","#fde3a7"],["Cold Drinks & Juices","🥤","#cdebc3"],["Atta, Rice & Dals","🌾","#eadfcd"],["Masalas & Oils","🌶️","#f6d3b3"],["Personal Care","🧴","#c4ecee"],["Household Essentials","🧽","#c5e1f7"]];
+const kid=i=>(CATS[i]&&CATS[i][3])||"c"+i;
+let CATS=[["Vegetables & Fruits","🥦","#f7c6cc"],["Fresh Meat & Seafood","🍗","#f7c6cc"],["Dairy & Eggs","🥛","#bfdcf7"],["Bakery & Biscuits","🍞","#f6dcc2"],["Snacks & Munchies","🍪","#fde3a7"],["Cold Drinks & Juices","🥤","#cdebc3"],["Atta, Rice & Dals","🌾","#eadfcd"],["Masalas & Oils","🌶️","#f6d3b3"],["Personal Care","🧴","#c4ecee"],["Household Essentials","🧽","#c5e1f7"]];
 try{wish=JSON.parse(localStorage.getItem("qd_wish")||"[]")}catch(e){}
 db.collection("settings").doc("store").onSnapshot(d=>{const c=d.data()||{};if(c.deliveryFee!=null)DELIVERY_FEE=+c.deliveryFee;if(c.taxPct!=null)TAX_PCT=+c.taxPct;if(c.upiId)UPI_ID=c.upiId;if(c.supportPhone)SUPPORT_PHONE=c.supportPhone;if(c.supportEmail)SUPPORT_EMAIL=c.supportEmail;soft()},e=>console.log(e.message));
 db.collection("categories").onSnapshot(x=>{catImg={};x.forEach(d=>catImg[d.id]=d.data().img);soft()},e=>console.log(e.message));
@@ -211,12 +214,13 @@ const cnt=()=>Object.values(cart).reduce((s,x)=>s+x,0);
 const live=()=>products.filter(p=>p.stock>0);
 const loginTo=t=>`after='${t}';showAuth=true;scr='id';render(true)`;
 function card(p){const c=cart[p.id]||0;
-return `<div class="pc"><button class="hz" onclick="toggleW('${p.id}')">${wish.includes(p.id)?"❤️":"🤍"}</button>${img(p)}<div class="pn">${esc(p.name)}</div><div class="row"><span><b>₹${p.price}</b>${p.mrp>p.price?` <s class="mu">₹${p.mrp}</s>`:""}</span>${c?`<span class="qty"><button onclick="dec('${p.id}')">−</button>${c}<button onclick="add('${p.id}')">+</button></span>`:`<button class="add" onclick="add('${p.id}')">+ADD</button>`}</div></div>`}
-const catPic=i=>catImg["c"+i]?`<img src="${catImg["c"+i]}" alt="">`:CATS[i][1];
+return `<div class="pc"><button class="hz" onclick="toggleW('${p.id}')">${wish.includes(p.id)?"❤️":"🤍"}</button>${img(p)}<div class="pn">${esc(p.name)}</div>${p.desc?`<div class="mu s2" style="max-height:2.5em;overflow:hidden">${esc(p.desc)}</div>`:""}<div class="row"><span><b>₹${p.price}</b>${p.mrp>p.price?` <s class="mu">₹${p.mrp}</s>`:""}</span>${c?`<span class="qty"><button onclick="dec('${p.id}')">−</button>${c}<button onclick="add('${p.id}')">+</button></span>`:`<button class="add" onclick="add('${p.id}')">+ADD</button>`}</div></div>`}
+const catPic=i=>catImg[kid(i)]?`<img src="${catImg[kid(i)]}" alt="">`:CATS[i][1];
 const catGrid=()=>`<div class="cg">${CATS.map((c,i)=>`<div onclick="pickI(${i})"><div class="ct" style="background:${c[2]}">${catPic(i)}</div><div class="cl">${esc(c[0])}</div></div>`).join("")}</div>`;
+function pickByName(n){pick(n)}
 function pickI(i){pick(CATS[i][0])}
 function pick(c){lst="cat:"+c;tab="list";q="";render(true);scrollTo(0,0)}
-const SECS=[["fresh","Fresh Today"],["featured","Featured Products"],["best","Best Sellers"],["seasonal","Seasonal Specials"]];
+let SECS=[["fresh","Fresh Today"],["featured","Featured Products"],["best","Best Sellers"],["seasonal","Seasonal Specials"]];
 const inSec=(p,k)=>(p.sec||[]).includes(k)||(k=="featured"&&p.featured);
 function openList(k){lst=k;tab="list";render(true);scrollTo(0,0)}
 const secHd=(t,k)=>`<div class="row"><h2>${t}</h2><button class="va" onclick="openList('${k}')">View all ›</button></div>`;
@@ -237,19 +241,21 @@ return `<div class="av"><div class="avc">${esc((me.name||"?")[0].toUpperCase())}
 function resV(){
 const L=live();
 if(q.trim()){const r=L.filter(p=>p.name.toLowerCase().includes(q.trim().toLowerCase()));return "<h2>Results</h2>"+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No products found.</p>')}
-let h=`<div class="hs">${BAN.map(b=>`<div class="bn" style="background:${b[4]}" onclick="pick('${b[3]}')"><div><b>${b[0]}</b><div class="s">${b[1]}</div><span class="sn">SHOP NOW</span></div><div class="be">${b[2]}</div></div>`).join("")}</div><h2>Shop by Categories</h2>${catGrid()}`;
+let h=`<div class="hs">${hbn.length?hbn.slice().sort((a,b)=>(a.at||0)-(b.at||0)).map(b=>`<div class="bn" style="padding:0;background:none" onclick="${b.cat?`pickByName('${esc(b.cat).replace(/'/g,"")}')`:""}"><img src="${esc(b.img)}" style="width:100%;height:100%;object-fit:cover;border-radius:16px" alt=""></div>`).join(""):BAN.map(b=>`<div class="bn" style="background:${b[4]}" onclick="pick('${b[3]}')"><div><b>${b[0]}</b><div class="s">${b[1]}</div><span class="sn">SHOP NOW</span></div><div class="be">${b[2]}</div></div>`).join("")}</div><h2>Shop by Categories</h2>${catGrid()}`;
 SECS.forEach(s=>{const r=L.filter(p=>inSec(p,s[0]));if(r.length)h+=secHd(s[1],s[0])+`<div class="hs">${r.map(card).join("")}</div>`});
 return h+(L.length?secHd("All Products","all")+`<div class="grid">${L.map(card).join("")}</div>`:'<p class="mu">No products yet.</p>')}
 function srch(v){q=v;$("#res").innerHTML=resV()}
 const homeV=()=>`<input class="srch" placeholder="Search for fresh products, veggies, or groceries..." value="${esc(q)}" oninput="srch(this.value)"><div id="res">${resV()}</div>`;
-const catCard=(c,i)=>`<div class="kcard" style="background:${c[2]}" onclick="pickI(${i})">${catImg["c"+i]?`<img src="${catImg["c"+i]}" alt="">`:`<div class="em">${c[1]}</div>`}<div>${esc(c[0])}</div></div>`;
+const catCard=(c,i)=>`<div class="kcard" style="background:${c[2]}" onclick="pickI(${i})">${catImg[kid(i)]?`<img src="${catImg[kid(i)]}" alt="">`:`<div class="em">${c[1]}</div>`}<div>${esc(c[0])}</div></div>`;
 function catV(){return `<div class="row"><h2>All Categories</h2><button class="va" onclick="tab='home';render(true);setTimeout(()=>{const e=$('.srch');e&&e.focus()},50)">🔍</button></div><div class="dis">DISCOVER OUR FULL RANGE</div><div class="kg">${CATS.map(catCard).join("")}</div>`}
-const tots=()=>{const sub=Object.keys(cart).reduce((n,id)=>{const p=products.find(x=>x.id==id);return n+(p?p.price*cart[id]:0)},0),fee=sub?DELIVERY_FEE:0,tax=Math.round(sub*TAX_PCT/100);return{sub,fee,tax,tot:sub+fee+tax}};
+const tots=()=>{const sub=Object.keys(cart).reduce((n,id)=>{const p=products.find(x=>x.id==id);return n+(p?p.price*cart[id]:0)},0),fee=sub&&!(FREE_ABOVE>0&&sub>=FREE_ABOVE)?DELIVERY_FEE:0,tax=Math.round(sub*TAX_PCT/100);return{sub,fee,tax,tot:sub+fee+tax}};
 const addrNow=()=>(me&&me.addr)||gAddr;
 function needLogin(t){after=t;showAuth=true;scr="id";render(true)}
 async function chAddr(){const n=prompt("Delivery address",addrNow());if(n===null)return;gAddr=n.trim();if(me){me.addr=gAddr;try{await db.collection("users").doc(me.uid).update({addr:gAddr})}catch(e){alert(e.message)}}render(true)}
 function rmI(id){delete cart[id];render(true)}
-function goCheckout(){if(!me)return needLogin("checkout");tab="checkout";render(true);scrollTo(0,0)}
+var FREE_ABOVE=0,MINS={},hbn=[];
+function minReq(){var L=orders.filter(function(o){return o.status!="cancelled"});if(!L.length)return MINS.n||0;var last=Math.max.apply(null,L.map(function(o){return (o.createdAt&&o.createdAt.seconds)||0})),d=(Date.now()/1000-last)/86400;return d<=7?(MINS.a||0):d<=30?(MINS.i7||0):(MINS.i30||0)}
+function goCheckout(){var t0=tots(),mr=minReq();if(mr>0&&t0.sub<mr)return alert("Minimum order value is ₹"+mr+". Add ₹"+(mr-t0.sub)+" more to continue.");if(!me)return needLogin("checkout");tab="checkout";render(true);scrollTo(0,0)}
 var myLoc=null;
 function getLoc(){navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{myLoc={lat:p.coords.latitude,lng:p.coords.longitude};toast("Location added");render(true)},e=>alert("Could not get location: "+e.message),{enableHighAccuracy:true,timeout:15000}):alert("Location is not available")}
 function savings(){let n=0;Object.keys(cart).forEach(id=>{const p=products.find(x=>x.id==id);if(p&&p.mrp>p.price)n+=(p.mrp-p.price)*cart[id]});return n}

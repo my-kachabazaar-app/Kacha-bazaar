@@ -179,12 +179,13 @@ const byTime=(a,b)=>((b.createdAt&&b.createdAt.seconds)||9e9)-((a.createdAt&&a.c
 const busy=r=>orders.some(o=>o.riderId==r.id&&ACTIVE.includes(o.status));
 const free=r=>r.approved&&r.available&&!busy(r);
 
-const CATS=[["Vegetables & Fruits","🥦","#f7c6cc"],["Fresh Meat & Seafood","🍗","#f7c6cc"],["Dairy & Eggs","🥛","#bfdcf7"],["Bakery & Biscuits","🍞","#f6dcc2"],["Snacks & Munchies","🍪","#fde3a7"],["Cold Drinks & Juices","🥤","#cdebc3"],["Atta, Rice & Dals","🌾","#eadfcd"],["Masalas & Oils","🌶️","#f6d3b3"],["Personal Care","🧴","#c4ecee"],["Household Essentials","🧽","#c5e1f7"]];
+const kid=i=>(CATS[i]&&CATS[i][3])||"c"+i;
+let CATS=[["Vegetables & Fruits","🥦","#f7c6cc"],["Fresh Meat & Seafood","🍗","#f7c6cc"],["Dairy & Eggs","🥛","#bfdcf7"],["Bakery & Biscuits","🍞","#f6dcc2"],["Snacks & Munchies","🍪","#fde3a7"],["Cold Drinks & Juices","🥤","#cdebc3"],["Atta, Rice & Dals","🌾","#eadfcd"],["Masalas & Oils","🌶️","#f6d3b3"],["Personal Care","🧴","#c4ecee"],["Household Essentials","🧽","#c5e1f7"]];
 db.collection("settings").doc("store").onSnapshot(d=>{const c=d.data()||{};if(c.deliveryFee!=null)DELIVERY_FEE=+c.deliveryFee;if(c.taxPct!=null)TAX_PCT=+c.taxPct;if(c.upiId)UPI_ID=c.upiId;if(c.supportPhone)SUPPORT_PHONE=c.supportPhone;if(c.supportEmail)SUPPORT_EMAIL=c.supportEmail;soft()},e=>console.log(e.message));
 const LOGO='<span style="color:var(--pr)">Kacha</span> <span style="color:#e8801a">Bazaar</span>';
-const SECS=[["fresh","Fresh Today"],["featured","Featured Products"],["best","Best Sellers"],["seasonal","Seasonal Specials"]];
+let SECS=[["fresh","Fresh Today"],["featured","Featured Products"],["best","Best Sellers"],["seasonal","Seasonal Specials"]];
 const inSec=(p,k)=>(p.sec||[]).includes(k)||(k=="featured"&&p.featured);
-const catPic=i=>catImg["c"+i]?`<img src="${catImg["c"+i]}" alt="">`:CATS[i][1];
+const catPic=i=>catImg[kid(i)]?`<img src="${catImg[kid(i)]}" alt="">`:CATS[i][1];
 const oid=o=>"KB"+o.id.slice(-4).toUpperCase();
 const dt=o=>o.createdAt&&o.createdAt.seconds?new Date(o.createdAt.seconds*1000).toLocaleString([],{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}):"";
 var ofl="all",aq="",addOpen=false;
@@ -206,7 +207,7 @@ else h+=`<div class="mu">Rider: ${esc(o.riderName)}</div>`+(o.status=="delivered
 return h+"</div>"}
 function ordList(){const k=aq.trim().toLowerCase();return orders.slice().sort(byTime).filter(o=>(ofl=="all"||o.status==ofl)&&(!k||(oid(o)+o.name+o.phone).toLowerCase().includes(k))).map(aCard).join("")||'<p class="mu">No orders.</p>'}
 function paid(id,v){db.collection("orders").doc(id).update({paid:v}).catch(e=>alert(e.message))}
-const prodForm=()=>`<div class="card stack"><input id="pn" placeholder="Product name"><input id="pp" type="number" placeholder="Price ₹"><input id="ps" type="number" placeholder="Stock"><input id="pi" placeholder="Emoji or image link (optional)"><button class="b l w" onclick="pickP()">📷 Choose photo <span id="pph"></span></button><select id="pc">${CATS.map(c=>`<option>${esc(c[0])}</option>`).join("")}</select><input id="pm" type="number" placeholder="Old price (MRP) ₹, optional">${SECS.map((x,i)=>`<label class="mu"><input id="sf${i}" type="checkbox" style="width:auto"> ${x[1]}</label>`).join("<br>")}<button class="b w" onclick="addP()">Add</button></div>`;
+const prodForm=()=>`<div class="card stack"><input id="pn" placeholder="Product name"><input id="pp" type="number" placeholder="Price ₹"><input id="ps" type="number" placeholder="Stock"><input id="pd" placeholder="Product description (optional)"><input id="pi" placeholder="Emoji or image link (optional)"><button class="b l w" onclick="pickP()">📷 Choose photo <span id="pph"></span></button><select id="pc">${CATS.map(c=>`<option>${esc(c[0])}</option>`).join("")}</select><input id="pm" type="number" placeholder="Old price (MRP) ₹, optional">${SECS.map((x,i)=>`<label class="mu"><input id="sf${i}" type="checkbox" style="width:auto"> ${x[1]}</label>`).join("<br>")}<button class="b w" onclick="addP()">Add</button></div>`;
 function prodList(){const k=aq.trim().toLowerCase();return products.filter(p=>!k||p.name.toLowerCase().includes(k)).map(p=>`<div class="card stack"><div class="ci">${img(p)}<div style="flex:1"><b>${esc(p.name)}</b><div class="mu s2">₹${p.price}${p.mrp>p.price?" (MRP ₹"+p.mrp+")":""} · Stock ${p.stock}</div><select onchange="setCatP('${p.id}',this.value)"><option value="">Category…</option>${CATS.map(c=>`<option ${p.cat==c[0]?"selected":""}>${esc(c[0])}</option>`).join("")}</select></div></div><div>${SECS.map(x=>`<button class="chip ${inSec(p,x[0])?"on":""}" onclick="tg('${p.id}','${x[0]}')">${x[1]}</button>`).join("")}</div><div class="row"><button class="b l" onclick="editProd('${p.id}')">✏️ Edit</button><button class="b l" onclick="setPimg('${p.id}')">Photo</button><button class="b l" onclick="stk('${p.id}')">Stock</button><button class="b l" onclick="delP('${p.id}')">Delete</button></div></div>`).join("")||'<p class="mu">No products.</p>'}
 function editProd(id){const p=products.find(x=>x.id==id),n=prompt("Name",p.name);if(n===null)return;const pr=prompt("Price ₹",p.price);if(pr===null)return;const m=prompt("Old price (MRP) ₹, 0 = none",p.mrp||0);if(m===null)return;db.collection("products").doc(id).update({name:n.trim()||p.name,price:+pr||p.price,mrp:+m||0}).catch(e=>alert(e.message))}
 function setCatP(id,v){if(v)db.collection("products").doc(id).update({cat:v}).catch(e=>alert(e.message))}
@@ -220,20 +221,20 @@ function adminV(){
 if(tab=="deposits")return depAV();if(tab=="returns")return retAV();if(tab=="notify")return notifV();if(tab=="rset")return rsetV();if(tab=="tix")return tixV();if(tab=="dash")return dashV();
 if(tab=="riders")return ridV();
 if(tab=="set")return setV();
-if(tab=="cats")return CATS.map((c,i)=>`<div class="card row"><span class="row" style="gap:10px;justify-content:flex-start"><span class="ct s" style="background:${c[2]}">${catPic(i)}</span>${esc(c[0])}</span><span><button class="b l" onclick="setCat(${i})">Image</button>${catImg["c"+i]?` <button class="b l" onclick="clrCat(${i})">Reset</button>`:""}</span></div>`).join("");
+if(tab=="cats")return CATS.map((c,i)=>`<div class="card row"><span class="row" style="gap:10px;justify-content:flex-start"><span class="ct s" style="background:${c[2]}">${catPic(i)}</span>${esc(c[0])}</span><span><button class="b l" onclick="setCat(${i})">Image</button>${catImg[kid(i)]?` <button class="b l" onclick="clrCat(${i})">Reset</button>`:""}</span></div>`).join("");
 if(tab=="products")return `<button class="b w" onclick="addOpen=!addOpen;render(true)">${addOpen?"Close":"+ Add product"}</button>`+(addOpen?prodForm():"")+`<input id="aq" class="srch" placeholder="Search products" value="${esc(aq)}" oninput="aS(this.value)" style="margin-top:10px"><div id="ares">${prodList()}</div>`;
 return `<div class="hs">${OF.map(f=>`<button class="chip ${ofl==f[0]?"on":""}" onclick="ofl='${f[0]}';render(true)">${f[1]} ${f[0]=="all"?orders.length:orders.filter(o=>o.status==f[0]).length}</button>`).join("")}</div><input id="aq" class="srch" placeholder="Search order no., name or phone" value="${esc(aq)}" oninput="aS(this.value)"><div id="ares">${ordList()}</div>`}
 async function assign(id){const rid=$("#r"+id).value,r=riders.find(x=>x.id==rid),m=+$("#e"+id).value;if(!(m>0))return alert("Enter the delivery time in minutes");if(!r||!free(r))return alert("No available rider");
 try{await db.collection("orders").doc(id).update({riderId:r.id,riderName:r.name,status:"assigned",assignedAt:TS(),eta:m,etaAt:Date.now()})}catch(e){alert(e.message)}}
 function setEta(id){const o=orders.find(x=>x.id==id),v=prompt("New delivery time from now (minutes)",o.eta||15);if(v===null||!(+v>0))return;db.collection("orders").doc(id).update({eta:+v,etaAt:Date.now()}).catch(e=>alert(e.message))}
 async function addP(){const n=$("#pn").value.trim(),p=+$("#pp").value,s=+$("#ps").value,m=+$("#pm").value||0;if(!n||!p||s<0)return alert("Enter name, price and stock");
-try{await db.collection("products").add({name:n,price:p,mrp:m,stock:s,img:pPhoto||$("#pi").value.trim(),cat:$("#pc").value,sec:SECS.filter((x,i)=>$("#sf"+i).checked).map(x=>x[0])});["#pn","#pp","#ps","#pi","#pm"].forEach(x=>$(x).value="");SECS.forEach((x,i)=>$("#sf"+i).checked=false);pPhoto="";addOpen=false;render(true)}catch(e){alert(e.message)}}
+try{await db.collection("products").add({name:n,price:p,mrp:m,stock:s,desc:($("#pd")||{value:""}).value.trim(),img:pPhoto||$("#pi").value.trim(),cat:$("#pc").value,sec:SECS.filter((x,i)=>$("#sf"+i).checked).map(x=>x[0])});["#pn","#pp","#ps","#pi","#pm"].forEach(x=>$(x).value="");SECS.forEach((x,i)=>$("#sf"+i).checked=false);pPhoto="";addOpen=false;render(true)}catch(e){alert(e.message)}}
 async function stk(id){const v=prompt("New stock quantity");if(v===null||isNaN(+v))return;db.collection("products").doc(id).update({stock:+v})}
 function tg(id,k){const p=products.find(x=>x.id==id),F=firebase.firestore.FieldValue,on=inSec(p,k),u={sec:on?F.arrayRemove(k):F.arrayUnion(k)};if(k=="featured"&&on)u.featured=false;db.collection("products").doc(id).update(u).catch(e=>alert(e.message))}
 function pickP(){pickImg(360,d=>{pPhoto=d;$("#pph").textContent="✓"})}
 function setPimg(id){pickImg(360,d=>db.collection("products").doc(id).update({img:d}).catch(e=>alert(e.message)))}
-function setCat(i){pickImg(400,d=>db.collection("categories").doc("c"+i).set({img:d}).catch(e=>alert(e.message)))}
-function clrCat(i){db.collection("categories").doc("c"+i).delete()}
+function setCat(i){pickImg(400,d=>db.collection("categories").doc(kid(i)).set({img:d}).catch(e=>alert(e.message)))}
+function clrCat(i){db.collection("categories").doc(kid(i)).delete()}
 function delP(id){if(confirm("Delete this product?"))db.collection("products").doc(id).delete()}
 
 var cfgR={},deps=[],tickets=[],tkA="";

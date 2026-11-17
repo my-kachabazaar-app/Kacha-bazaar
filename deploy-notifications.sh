@@ -45,7 +45,7 @@ async function destroy(u){
   console.log("cloudinary destroy",pid,r.status);
 }
 const sweep=(b,a)=>{const keep=new Set(a?urlsOf(a):[]);return Promise.all(urlsOf(b).filter(u=>!keep.has(u)).map(destroy))};
-for(const [name,path] of [["products","products/{id}"],["categories","categories/{id}"],["riderMedia","riderMedia/{id}"],["files","files/{id}"],["kyc","users/{u}/kyc/{t}"],["settings","settings/{id}"],["users","users/{id}"]]){
+for(const [name,path] of [["products","products/{id}"],["categories","categories/{id}"],["riderMedia","riderMedia/{id}"],["files","files/{id}"],["kyc","users/{u}/kyc/{t}"],["settings","settings/{id}"],["users","users/{id}"],["homeBanners","homeBanners/{id}"]]){
   exports["cldDel_"+name]=onDocumentDeleted({document:path,region:R},e=>sweep(e.data.data(),null));
   exports["cldUpd_"+name]=onDocumentUpdated({document:path,region:R},e=>sweep(e.data.before.data(),e.data.after.data()));
 }
@@ -78,6 +78,7 @@ exports.riderApproved=onDocumentUpdated({document:"users/{id}",region:R},e=>{
   return !b.approved&&a.approved?toUser(e.params.id,"Account approved 🎉",`Your rider ID is ${a.riderCode||""}. You can go online now.`):null});
 exports.broadcast=onDocumentCreated({document:"broadcasts/{id}",region:R},e=>{
   const b=e.data.data(),col=db.collection("tokens");
+  if(b.to==="uids"&&b.uids)return Promise.all(b.uids.slice(0,450).map(u=>toUser(u,b.title,b.body)));
   return send(b.to==="all"?col:col.where("role","==",b.to),b.title,b.body)});
 EOF
 sed -i "s/__REGION__/$REGION/" functions/index.js

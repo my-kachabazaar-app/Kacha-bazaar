@@ -4,15 +4,10 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function userDoc(u) { return get(/databases/$(database)/documents/users/$(u)).data; }
     function isAdmin() { return signedIn() && userDoc(request.auth.uid).role == 'admin'; }
-    function riderPay() {
+    function riderCap() {
       let p = /databases/$(database)/documents/settings/rider;
-      return exists(p)
-        ? get(p).data.get('pay', 0)
-          + (get(p).data.get('surgeOn', false) ? get(p).data.get('surge', 0) : 0)
-          + (get(p).data.get('rainOn', false) ? get(p).data.get('rain', 0) : 0)
-        : 0;
+      return exists(p) ? get(p).data.get('maxEarn', 1000) : 1000;
     }
-
     function callOk(oid, who, callee) {
       let o = get(/databases/$(database)/documents/orders/$(oid)).data;
       return who == 'rider'
@@ -31,12 +26,21 @@ service cloud.firestore {
       allow update: if isAdmin() || (signedIn() && request.auth.uid == u
         && request.resource.data.role == resource.data.role
         && request.resource.data.get('riderCode', '') == resource.data.get('riderCode', '')
-        && request.resource.data.get('approved', false) == resource.data.get('approved', false));
+        && request.resource.data.get('approved', false) == resource.data.get('approved', false)
+        && request.resource.data.get('wallet', 0) == resource.data.get('wallet', 0)
+        && request.resource.data.get('blocked', false) == resource.data.get('blocked', false)
+        && request.resource.data.get('status', 'active') == resource.data.get('status', 'active')
+        && request.resource.data.get('adminRole', '') == resource.data.get('adminRole', '')
+        && request.resource.data.get('pay', {}) == resource.data.get('pay', {})
+        && request.resource.data.get('docVerified', {}) == resource.data.get('docVerified', {}));
     }
     match /users/{u}/kyc/{t} {
       allow read: if signedIn() && (request.auth.uid == u || isAdmin());
-      allow write: if signedIn() && request.auth.uid == u
-        && !userDoc(u).get('approved', false);
+      allow write: if signedIn() && request.auth.uid == u && !userDoc(u).get('approved', false);
+    }
+    match /users/{u}/wallet/{t} {
+      allow read: if signedIn() && (request.auth.uid == u || isAdmin());
+      allow write: if isAdmin();
     }
     match /lookup/{k} {
       allow delete: if signedIn() && resource.data.uid == request.auth.uid;
@@ -45,28 +49,26 @@ service cloud.firestore {
         && request.resource.data.email == request.auth.token.email
         && (k == request.auth.token.email || k == userDoc(request.auth.uid).phone || k == 'r_' + userDoc(request.auth.uid).phone);
     }
-    match /products/{p} {
-      allow read: if true;
+    match /products/{p} { allow read: if true; allow write: if isAdmin(); }
+    match /categories/{c} { allow read: if true; allow write: if isAdmin(); }
+    match /settings/{k} { allow read: if true; allow write: if isAdmin(); }
+    match /homeBanners/{b} { allow read: if true; allow write: if isAdmin(); }
+    match /stores/{s} { allow read: if true; allow write: if isAdmin(); }
+    match /coupons/{c} {
+      allow get: if signedIn();
+      allow list: if isAdmin();
       allow write: if isAdmin();
     }
-    match /categories/{c} {
-      allow read: if true;
+    match /riderMedia/{m} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /files/{f} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /counters/{c} { allow read, write: if isAdmin(); }
+    match /payouts/{p} {
+      allow read: if signedIn() && (isAdmin() || resource.data.riderId == request.auth.uid);
       allow write: if isAdmin();
     }
-    match /settings/{k} {
-      allow read: if true;
+    match /payslips/{p} {
+      allow read: if signedIn() && (isAdmin() || resource.data.riderId == request.auth.uid);
       allow write: if isAdmin();
-    }
-    match /riderMedia/{m} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-    match /files/{f} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-    match /counters/{c} {
-      allow read, write: if isAdmin();
     }
     match /deposits/{d} {
       allow read: if signedIn() && (isAdmin() || resource.data.riderId == request.auth.uid);
@@ -76,8 +78,7 @@ service cloud.firestore {
     }
     match /tickets/{t} {
       allow create: if signedIn() && request.resource.data.riderId == request.auth.uid
-        && request.resource.data.status == 'open'
-        && request.resource.data.msgs.size() == 1;
+        && request.resource.data.status == 'open' && request.resource.data.msgs.size() == 1;
       allow read: if signedIn() && (isAdmin() || resource.data.riderId == request.auth.uid);
       allow update: if isAdmin() || (signedIn() && resource.data.riderId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['msgs', 'status'])
@@ -89,9 +90,7 @@ service cloud.firestore {
         && request.resource.data.role == userDoc(request.auth.uid).role;
       allow delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
-    match /broadcasts/{b} {
-      allow create, read: if isAdmin();
-    }
+    match /broadcasts/{b} { allow create, read: if isAdmin(); }
     match /calls/{c} {
       allow create: if signedIn() && request.resource.data.callerUid == request.auth.uid
         && callOk(request.resource.data.orderId, request.resource.data.caller, request.resource.data.calleeUid);
@@ -104,16 +103,18 @@ service cloud.firestore {
     match /orders/{o} {
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
         && request.resource.data.status == 'pending'
-        && request.resource.data.riderId == null;
+        && request.resource.data.riderId == null
+        && !userDoc(request.auth.uid).get('blocked', false);
       allow read: if signedIn() && (isAdmin() || resource.data.uid == request.auth.uid
         || (resource.data.riderId == request.auth.uid && request.auth.token.email_verified == true));
       allow update: if isAdmin() || (signedIn() && resource.data.riderId == request.auth.uid
         && request.auth.token.email_verified == true
+        && userDoc(request.auth.uid).get('status', 'active') == 'active'
         && !(resource.data.status in ['delivered', 'cancelled'])
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'collectedAt', 'arrivedAt', 'deliveredAt', 'cancelledAt', 'cancelReason', 'earn', 'finalTotal', 'flags', 'returnPending'])
         && request.resource.data.status in ['collected', 'arrived', 'delivered', 'cancelled']
         && (request.resource.data.status != 'delivered'
-          || (request.resource.data.earn == riderPay() && request.resource.data.deliveredAt == request.time)));
+          || (request.resource.data.earn >= 0 && request.resource.data.earn <= riderCap() && request.resource.data.deliveredAt == request.time)));
     }
   }
 }
