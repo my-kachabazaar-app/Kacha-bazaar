@@ -127,7 +127,9 @@ await auth.signInWithEmailLink(em.trim(),location.href);history.replaceState(nul
 async function boot(u){
 const d=await db.collection("users").doc(u.uid).get();
 if(!d.exists||d.data().role!="admin"){alert("This is the admin site. This account is not an admin.");return auth.signOut()}
-me=Object.assign({uid:u.uid},d.data());tab="dash";window.kbPush&&kbPush(db,u.uid,me.role);
+me=Object.assign({uid:u.uid},d.data());tab="dash";
+if(d.data().adminRole&&d.data().adminRole!="Super Admin"&&!d.data().approved){render(true);return}
+window.kbPush&&kbPush(db,u.uid,me.role);
 listen(db.collection("products"),a=>products=a);
 listen(db.collection("categories"),a=>{catImg={};a.forEach(c=>catImg[c.id]=c.img)});
 listen(db.collection("orders"),a=>orders=a,"New order received!");

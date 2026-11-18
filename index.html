@@ -288,11 +288,13 @@ if(me&&o)h+=`<h2>Recent Order Help</h2><div class="card oc stack"><div class="ro
 return h+'<h2>Help Topics</h2><div class="card pl">'+FAQ.map((f,i)=>`<div class="pi" onclick="hopen=hopen==${i}?-1:${i};render(true)"><span>${f[1]}</span><div>${f[0]}${hopen==i?`<div class="mu s2">${f[2]}</div>`:""}</div><span class="mu">›</span></div>`).join("")+'</div><h2>Contact Us</h2><div class="card pl">'+C("💬","Live Chat",ph?"WhatsApp chat":"Not set up yet",ph?`https://wa.me/${ph}`:"",ph?"Online":"")+C("✉️","Email Support",esc(SUPPORT_EMAIL)||"Not set up yet",SUPPORT_EMAIL?`mailto:${esc(SUPPORT_EMAIL)}`:"")+C("📞","Call Support",esc(SUPPORT_PHONE)||"Not set up yet",SUPPORT_PHONE?`tel:${esc(SUPPORT_PHONE)}`:"")+'</div>'}
 function add(id){const p=products.find(x=>x.id==id);if((cart[id]||0)>=p.stock)return alert("Out of stock");cart[id]=(cart[id]||0)+1;render(true)}
 function dec(id){if(--cart[id]<=0)delete cart[id];render(true)}
+function getLocThen(cb){if(!navigator.geolocation)return cb();navigator.geolocation.getCurrentPosition(function(p){myLoc={lat:p.coords.latitude,lng:p.coords.longitude};cb()},function(){alert("Please allow location access so the rider can find your exact address, then place the order again.")},{enableHighAccuracy:true,timeout:15000})}
 async function place(){
+if(!myLoc)return getLocThen(place);
 const n=$("#cn").value.trim(),p=$("#cp").value.trim(),ad=$("#ca").value.trim(),u=pay=="upi"?$("#cu").value.trim():"";
 if(!n||p.length<10||!ad)return alert("Enter name, phone and address");
 if(pay=="upi"&&u.length<6)return alert("Enter the UPI transaction number");
-const items=Object.keys(cart).map(id=>{const x=products.find(y=>y.id==id);return{id,name:x.name,q:cart[id],price:x.price}});
+const items=Object.keys(cart).map(id=>{const x=products.find(y=>y.id==id);return{id,name:x.name,q:cart[id],price:x.price,img:/^https?:/.test(x.img||"")?x.img:""}});
 const T=tots(),total=T.tot;
 try{await db.collection("orders").add({uid:me.uid,name:n,phone:p,addr:ad,items,total,sub:T.sub,fee:T.fee,tax:T.tax,pay,utr:u,status:"pending",riderId:null,riderName:null,lat:myLoc?myLoc.lat:null,lng:myLoc?myLoc.lng:null,createdAt:TS()});cart={};if(me.addr!==ad){me.addr=ad;db.collection("users").doc(me.uid).update({addr:ad}).catch(()=>{})}tab="orders";render(true)}catch(e){alert(e.message)}}
 const oid=o=>"KB"+o.id.slice(-4).toUpperCase();

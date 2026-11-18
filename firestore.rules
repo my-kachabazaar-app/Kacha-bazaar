@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function userDoc(u) { return get(/databases/$(database)/documents/users/$(u)).data; }
-    function isAdmin() { return signedIn() && userDoc(request.auth.uid).role == 'admin'; }
+    function isAdmin() { return signedIn() && userDoc(request.auth.uid).role == 'admin' && userDoc(request.auth.uid).get('approved', true) == true; }
     function riderCap() {
       let p = /databases/$(database)/documents/settings/rider;
       return exists(p) ? get(p).data.get('maxEarn', 1000) : 1000;
@@ -32,7 +32,8 @@ service cloud.firestore {
         && request.resource.data.get('status', 'active') == resource.data.get('status', 'active')
         && request.resource.data.get('adminRole', '') == resource.data.get('adminRole', '')
         && request.resource.data.get('pay', {}) == resource.data.get('pay', {})
-        && request.resource.data.get('docVerified', {}) == resource.data.get('docVerified', {}));
+        && request.resource.data.get('docVerified', {}) == resource.data.get('docVerified', {})
+        && request.resource.data.get('rateCard', '') == resource.data.get('rateCard', ''));
     }
     match /users/{u}/kyc/{t} {
       allow read: if signedIn() && (request.auth.uid == u || isAdmin());
@@ -99,6 +100,11 @@ service cloud.firestore {
         allow create, read, delete: if signedIn() && (get(/databases/$(database)/documents/calls/$(c)).data.callerUid == request.auth.uid
           || get(/databases/$(database)/documents/calls/$(c)).data.calleeUid == request.auth.uid);
       }
+    }
+    match /trails/{x} {
+      allow read: if signedIn() && (isAdmin() || resource.data.riderId == request.auth.uid);
+      allow create, update: if signedIn() && request.resource.data.riderId == request.auth.uid;
+      allow delete: if isAdmin();
     }
     match /orders/{o} {
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
