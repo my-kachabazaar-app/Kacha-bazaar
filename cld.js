@@ -1,5 +1,5 @@
 (function(){
-window.CLD={cloud:"YOUR_CLOUD_NAME",preset:"kb_public",privatePreset:"kb_private"};
+window.CLD={cloud:"fxxphwlv",preset:"kb_public",privatePreset:"kb_private"};
 function busy(on){var d=document.getElementById("cldbusy");
 if(on){if(!d){d=document.createElement("div");d.id="cldbusy";d.style.cssText="position:fixed;top:0;left:0;right:0;bottom:0;background:#0006;z-index:9998;display:flex;align-items:center;justify-content:center;color:#fff;font:600 18px system-ui,sans-serif";d.textContent="Uploading…";document.body.appendChild(d)}d.style.display="flex"}
 else if(d)d.style.display="none"}
