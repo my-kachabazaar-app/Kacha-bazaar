@@ -17,14 +17,17 @@ jobs:
             tag: ""
             color: "#12703f"
             splash: 1800
+            fg: 740
           - key: admin
             appid: com.kachabazaar.admin
             appname: KB Admin
             url: https://my-kachabazaar-app.github.io/Kacha-bazaar/admin.html
-            tag: ADMIN
+            tag: ""
             color: "#c62828"
             splash: 1800
+            fg: 860
           - key: rider
+            fg: 740
             appid: com.kachabazaar.rider
             appname: KB PARTNER
             url: https://my-kachabazaar-app.github.io/Kacha-bazaar/rider.html
@@ -100,7 +103,7 @@ jobs:
               w = d.textlength(tag, font=f)
               d.text(((1024 - w) / 2, 830), tag, font=f, fill="white")
           icon.convert("RGB").save("app/assets/icon-only.png")
-          put(Image.new("RGBA", (1024, 1024), (0, 0, 0, 0)), 740).save("app/assets/icon-foreground.png")
+          put(Image.new("RGBA", (1024, 1024), (0, 0, 0, 0)), ${{ matrix.fg }}).save("app/assets/icon-foreground.png")
           Image.new("RGB", (1024, 1024), "white").save("app/assets/icon-background.png")
           for name, bg in (("splash", "#ffffff"), ("splash-dark", "#0f1a13")):
               put(Image.new("RGBA", (2732, 2732), bg), 760).convert("RGB").save("app/assets/" + name + ".png")
@@ -111,7 +114,7 @@ jobs:
         run: |
           cd app
           cp ../google-services.json android/app/google-services.json
-          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
           mkdir -p android/app/src/main/res/raw
           python3 - <<'PY'
           import wave, struct, math
