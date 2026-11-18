@@ -226,29 +226,29 @@ function openList(k){lst=k;tab="list";render(true);scrollTo(0,0)}
 const secHd=(t,k)=>`<div class="row"><h2>${t}</h2><button class="va" onclick="openList('${k}')">View all ›</button></div>`;
 function listV(){const s=SECS.find(x=>x[0]==lst),k=lst.startsWith("cat:"),r=lst=="all"?live():k?live().filter(p=>p.cat==lst.slice(4)):live().filter(p=>inSec(p,lst));
 return `<button class="b l" onclick="tab='home';render(true)">← Back</button><h2>${esc(k?lst.slice(4):s?s[1]:"All Products")}</h2>`+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No products here yet.</p>')}
-const hdr=()=>`<div class="row hd"><button class="pb" onclick="${me?"tab='prof';render(true)":loginTo("prof")}"><img src="logo.png" alt="Profile"></button><b class="logo">${LOGO}</b><button class="hz2" onclick="tab='wish';render(true)">❤️</button>${me?`<span class="mu">Hi, ${esc(me.name.split(" ")[0])}</span>`:`<button class="b l" onclick="${loginTo("")}">Login/Register</button>`}</div>`;
+var hdr=()=>`<div class="row hd"><button class="pb" onclick="${me?"tab='prof';render(true)":loginTo("prof")}"><img src="logo.png" alt="Profile"></button><b class="logo">${LOGO}</b><button class="hz2" onclick="tab='wish';render(true)">❤️</button>${me?`<span class="mu">Hi, ${esc(me.name.split(" ")[0])}</span>`:`<button class="b l" onclick="${loginTo("")}">Login/Register</button>`}</div>`;
 const soon=()=>toast("Coming soon");
 async function editP(){const n=prompt("Your name",me.name);if(n===null||!n.trim())return;me.name=n.trim();try{await db.collection("users").doc(me.uid).update({name:me.name})}catch(e){alert(e.message)}render(true)}
 async function editA(){const n=prompt("Delivery address",me.addr||"");if(n===null)return;me.addr=n.trim();try{await db.collection("users").doc(me.uid).update({addr:me.addr})}catch(e){alert(e.message)}render(true)}
 function profV(){
 const I=(ic,t,sub,fn)=>`<div class="pi" onclick="${fn}"><span>${ic}</span><div><div>${t}</div>${sub?`<div class="mu s2">${sub}</div>`:""}</div><span class="mu">›</span></div>`;
 return `<div class="av"><div class="avc">${esc((me.name||"?")[0].toUpperCase())}</div><a href="#" onclick="tab='editp';render(true);return false">Edit Profile</a><div class="mu s2">${esc(me.phone)} · ${esc(me.email||"")}</div></div>
-<div class="tl"><div onclick="tab='orders';render(true)">🛍<br>Your Orders</div><div onclick="soon()">💳<br>Kacha Cash</div><div onclick="tab='wish';render(true)">♡<br>Your Wishlist</div></div>
-<div class="card kc stack" onclick="soon()"><div class="row"><b>👛 Kacha Cash &amp; Gift Card</b><span>›</span></div><div class="row"><span>Available Balance ₹0</span><button class="b l">Add Balance</button></div></div>
+<div class="tl"><div onclick="tab='orders';render(true)">🛍<br>Your Orders</div><div onclick="openWallet()">💳<br>Kacha Cash</div><div onclick="tab='wish';render(true)">♡<br>Your Wishlist</div></div>
+<div class="card kc stack" onclick="openWallet()"><div class="row"><b>👛 Kacha Cash &amp; Gift Card</b><span>›</span></div><div class="row"><span>Available Balance ₹${Math.round(me.wallet||0)}</span><button class="b l">Add Balance</button></div></div>
 <h2>Profile Information</h2><div class="card pl">${I("⭐","Rewards &amp; Earn","","soon()")}${I("📍","Saved Addresses",me.addr?"1 Address":"None","editA()")}${I("💳","Payments","","soon()")}${I("👤","Profile Details",esc(me.name),"tab='editp';render(true)")}</div>
 <h2>More Options</h2><div class="card pl">${I("💬","Help &amp; Support","","tab='help';render(true)")}${I("☆","Suggest Products","","soon()")}${I("ℹ️","General Info","","alert('${STORE} - fresh groceries delivered fast.')")}</div>
 <button class="b l w" onclick="auth.signOut()">Log Out</button>`}
 function resV(){
 const L=live();
 if(q.trim()){const r=L.filter(p=>p.name.toLowerCase().includes(q.trim().toLowerCase()));return "<h2>Results</h2>"+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No products found.</p>')}
-let h=`<div class="hs">${hbn.length?hbn.slice().sort((a,b)=>(a.at||0)-(b.at||0)).map(b=>`<div class="bn" style="padding:0;background:none" onclick="${b.cat?`pickByName('${esc(b.cat).replace(/'/g,"")}')`:""}"><img src="${esc(b.img)}" style="width:100%;height:100%;object-fit:cover;border-radius:16px" alt=""></div>`).join(""):BAN.map(b=>`<div class="bn" style="background:${b[4]}" onclick="pick('${b[3]}')"><div><b>${b[0]}</b><div class="s">${b[1]}</div><span class="sn">SHOP NOW</span></div><div class="be">${b[2]}</div></div>`).join("")}</div><h2>Shop by Categories</h2>${catGrid()}`;
+let h=`<div class="hs" id="bnr">${hbn.length?hbn.slice().sort((a,b)=>(a.at||0)-(b.at||0)).map(b=>`<div class="bn" style="padding:0;background:none" onclick="${b.cat?`pickByName('${esc(b.cat).replace(/'/g,"")}')`:""}"><img src="${esc(b.img)}" style="width:100%;height:100%;object-fit:cover;border-radius:16px" alt=""></div>`).join(""):BAN.map(b=>`<div class="bn" style="background:${b[4]}" onclick="pick('${b[3]}')"><div><b>${b[0]}</b><div class="s">${b[1]}</div><span class="sn">SHOP NOW</span></div><div class="be">${b[2]}</div></div>`).join("")}</div>${typeof zonesRow=="function"?zonesRow():""}<h2>Shop by Categories</h2>${catGrid()}`;
 SECS.forEach(s=>{const r=L.filter(p=>inSec(p,s[0]));if(r.length)h+=secHd(s[1],s[0])+`<div class="hs">${r.map(card).join("")}</div>`});
 return h+(L.length?secHd("All Products","all")+`<div class="grid">${L.map(card).join("")}</div>`:'<p class="mu">No products yet.</p>')}
 function srch(v){q=v;$("#res").innerHTML=resV()}
-const homeV=()=>`<input class="srch" placeholder="Search for fresh products, veggies, or groceries..." value="${esc(q)}" oninput="srch(this.value)"><div id="res">${resV()}</div>`;
+var homeV=()=>`<input class="srch" placeholder="Search for fresh products, veggies, or groceries..." value="${esc(q)}" oninput="srch(this.value)"><div id="res">${resV()}</div>`;
 const catCard=(c,i)=>`<div class="kcard" style="background:${c[2]}" onclick="pickI(${i})">${catImg[kid(i)]?`<img src="${catImg[kid(i)]}" alt="">`:`<div class="em">${c[1]}</div>`}<div>${esc(c[0])}</div></div>`;
 function catV(){return `<div class="row"><h2>All Categories</h2><button class="va" onclick="tab='home';render(true);setTimeout(()=>{const e=$('.srch');e&&e.focus()},50)">🔍</button></div><div class="dis">DISCOVER OUR FULL RANGE</div><div class="kg">${CATS.map(catCard).join("")}</div>`}
-const tots=()=>{const sub=Object.keys(cart).reduce((n,id)=>{const p=products.find(x=>x.id==id);return n+(p?p.price*cart[id]:0)},0),fee=sub&&!(FREE_ABOVE>0&&sub>=FREE_ABOVE)?DELIVERY_FEE:0,tax=Math.round(sub*TAX_PCT/100);return{sub,fee,tax,tot:sub+fee+tax}};
+var tots=()=>{const sub=Object.keys(cart).reduce((n,id)=>{const p=products.find(x=>x.id==id);return n+(p?p.price*cart[id]:0)},0),fee=sub&&!(FREE_ABOVE>0&&sub>=FREE_ABOVE)?DELIVERY_FEE:0,tax=Math.round(sub*TAX_PCT/100);return{sub,fee,tax,tot:sub+fee+tax}};
 const addrNow=()=>(me&&me.addr)||gAddr;
 function needLogin(t){after=t;showAuth=true;scr="id";render(true)}
 async function chAddr(){const n=prompt("Delivery address",addrNow());if(n===null)return;gAddr=n.trim();if(me){me.addr=gAddr;try{await db.collection("users").doc(me.uid).update({addr:gAddr})}catch(e){alert(e.message)}}render(true)}
@@ -280,7 +280,7 @@ return h+'<button class="b w" onclick="place()">Place order</button></div>'}
 const wishV=()=>{const r=live().filter(p=>wish.includes(p.id));return `<h2>❤️ My Wishlist</h2>`+(r.length?`<div class="grid">${r.map(card).join("")}</div>`:'<p class="mu">No wishlisted products yet. Tap the heart on any product.</p>')};
 function toggleW(id){wish=wish.includes(id)?wish.filter(x=>x!=id):wish.concat(id);if(me)db.collection("users").doc(me.uid).update({wish}).catch(e=>alert(e.message));else try{localStorage.setItem("qd_wish",JSON.stringify(wish))}catch(e){}render(true)}
 const loginP=t=>pgHd("Your Orders")+`<div class="card stack"><p>Please log in to ${t}.</p><button class="b w" onclick="${loginTo("orders")}">Login/Register</button></div>`;
-const FAQ=[["Frequently Asked Questions (FAQs)","❓","Add products to the cart, choose Cash on Delivery or UPI and place your order. A rider collects it from the store and delivers it to you."],["Returns &amp; Refunds","↩️","If something is wrong with your order, contact support with your order number."],["Delivery Status &amp; Fees","🚚","Open the Order tab and tap Track Order to see the status. Delivery fee and GST are shown in your cart bill."],["Offers &amp; Payments","💳","We accept Cash on Delivery and UPI. For UPI, pay first and enter the transaction number at checkout."],["Account &amp; Login","👤","Log in with your mobile number or email and your 4-digit password. Use Forgot password? to set a new one."],["Feedback &amp; Suggestions","💬","Tell us what to improve or which products to add through support."]];
+var FAQ=[["Frequently Asked Questions (FAQs)","❓","Add products to the cart, choose Cash on Delivery or UPI and place your order. A rider collects it from the store and delivers it to you."],["Returns &amp; Refunds","↩️","If something is wrong with your order, contact support with your order number."],["Delivery Status &amp; Fees","🚚","Open the Order tab and tap Track Order to see the status. Delivery fee and GST are shown in your cart bill."],["Offers &amp; Payments","💳","We accept Cash on Delivery and UPI. For UPI, pay first and enter the transaction number at checkout."],["Account &amp; Login","👤","Log in with your mobile number or email and your 4-digit password. Use Forgot password? to set a new one."],["Feedback &amp; Suggestions","💬","Tell us what to improve or which products to add through support."]];
 function helpV(){const o=orders.slice().sort(byTime)[0],ph=SUPPORT_PHONE.replace(/\D/g,"");
 const C=(ic,t,sub,href,tg)=>`<a class="pi" ${href?`href="${href}"`:""} style="text-decoration:none;color:inherit"><span>${ic}</span><div>${t}<div class="mu s2">${sub}</div></div>${tg?`<span class="tag s-delivered">${tg}</span>`:""}</a>`;
 let h='<h2>Help &amp; Support</h2>';
@@ -338,10 +338,12 @@ function render(force){
 const a=$("#app"),nav=$("#nav");$("#hbg").style.display="none";$("#top").className="";
 const key=[tab,lst,oSel,showAuth,scr,!!me].join();if(key!=lastKey){lastKey=key;a.className="";void a.offsetWidth;a.className="go"}
 if(showAuth&&!me){nav.innerHTML="";$("#top").innerHTML="";return swap(a,authV())}
-const fullPg=["orders","odet","editp","cart","checkout"].includes(tab);$("#top").innerHTML=fullPg?"":hdr();$("#top").className=tab=="home"?"h":"";$("#hbg").style.display=tab=="home"?"block":"none";
+const fullPg=["orders","odet","editp","cart","checkout","zone","chat","wallet"].includes(tab);$("#top").innerHTML=fullPg?"":hdr();$("#top").className=tab=="home"?"h":"";$("#hbg").style.display=tab=="home"?"block":"none";
 const N=[["home","🏠","Home"],["cat","▦","Category"],["cart","🛒","Cart"],["orders","🛍","Order"],["help","❓","Help"]];
 nav.innerHTML=N.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="tab='${t[0]}';render(true);scrollTo(0,0)"><span>${t[1]}${t[0]=="cart"&&cnt()?`<i>${cnt()}</i>`:""}</span>${t[2]}</button>`).join("");
-swap(a,tab=="cat"?catV():tab=="cart"?cartV():tab=="odet"?odetV():tab=="editp"?(me?editV():homeV()):tab=="checkout"?(me?checkoutV():cartV()):tab=="wish"?wishV():tab=="orders"?(me?myOrdersV():loginP("see your orders")):tab=="help"?helpV():tab=="list"?listV():tab=="prof"?(me?profV():homeV()):homeV())}
+swap(a,tab=="zone"?zoneV():tab=="chat"?chatV():tab=="wallet"?(me?walletPg():homeV()):tab=="cat"?catV():tab=="cart"?cartV():tab=="odet"?odetV():tab=="editp"?(me?editV():homeV()):tab=="checkout"?(me?checkoutV():cartV()):tab=="wish"?wishV():tab=="orders"?(me?myOrdersV():loginP("see your orders")):tab=="help"?helpV():tab=="list"?listV():tab=="prof"?(me?profV():homeV()):homeV())}
 </script>
+<script src="cld.js"></script>
+<script src="customer-pro.js"></script>
 </body>
 </html>

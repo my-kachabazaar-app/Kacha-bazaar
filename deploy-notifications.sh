@@ -55,6 +55,9 @@ exports.depositUpdated=onDocumentUpdated({document:"deposits/{id}",region:R},e=>
   if(b.status==="pending"&&a.status==="done")return toUser(a.riderId,"Deposit received ✅",`₹${a.amount} received by the store manager`);
   if(b.status==="pending"&&a.status==="rejected")return toUser(a.riderId,"Deposit not accepted ❌",`Your ₹${a.amount} deposit was rejected. Please contact the store manager.`);
   return null});
+exports.orderCleanup=onDocumentUpdated({document:"orders/{id}",region:R},async e=>{const a=e.data.after.data(),b=e.data.before.data();
+  if((a.status==="delivered"||a.status==="cancelled")&&a.voiceUrl&&b.status!==a.status){try{await destroy(a.voiceUrl)}catch(x){}await e.data.after.ref.update({voiceUrl:""})}
+  if(a.status==="pending"&&a.coupon&&b.status!==a.status&&false){}});
 exports.orderCreated=onDocumentCreated({document:"orders/{id}",region:R},e=>{const o=e.data.data();
   return Promise.all([toRole("admin","New order 🛒",`${o.name} · ₹${o.total} · ${o.pay==="upi"?"UPI":"COD"}`),toUser(o.uid,"Order placed ✅","We have received your order. Waiting for store confirmation.")])});
 exports.orderUpdated=onDocumentUpdated({document:"orders/{id}",region:R},e=>{
