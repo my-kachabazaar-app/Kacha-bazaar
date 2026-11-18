@@ -17,7 +17,7 @@ jobs:
             tag: ""
             color: "#12703f"
             splash: 1800
-            fg: 740
+            fg: 940
           - key: admin
             appid: com.kachabazaar.admin
             appname: KB Admin
@@ -25,9 +25,9 @@ jobs:
             tag: ""
             color: "#c62828"
             splash: 1800
-            fg: 860
+            fg: 940
           - key: rider
-            fg: 740
+            fg: 940
             appid: com.kachabazaar.rider
             appname: KB PARTNER
             url: https://my-kachabazaar-app.github.io/Kacha-bazaar/rider.html
@@ -91,11 +91,22 @@ jobs:
           tag = "${{ matrix.tag }}"
           color = "${{ matrix.color }}"
           logo = Image.open("logo-1024.png").convert("RGBA")
+          from PIL import ImageChops
+          flat = Image.new("RGB", logo.size, (255, 255, 255))
+          flat.paste(logo, mask=logo.split()[3])
+          diff = ImageChops.difference(flat, Image.new("RGB", logo.size, (255, 255, 255))).convert("L").point(lambda p: 255 if p > 14 else 0)
+          bb = diff.getbbox()
+          if bb:
+              logo = logo.crop(bb)
+              side = max(logo.size)
+              sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+              sq.paste(logo, ((side - logo.width) // 2, (side - logo.height) // 2))
+              logo = sq
           def put(canvas, size):
               l = logo.resize((size, size), Image.LANCZOS)
               canvas.paste(l, ((canvas.width - size) // 2, (canvas.height - size) // 2), l)
               return canvas
-          icon = put(Image.new("RGBA", (1024, 1024), "white"), 940)
+          icon = put(Image.new("RGBA", (1024, 1024), "white"), 1000)
           if tag:
               d = ImageDraw.Draw(icon)
               d.rectangle([0, 800, 1024, 1024], fill=color)
@@ -154,7 +165,7 @@ jobs:
                       Uri sound = Uri.parse("android.resource://" + getPackageName() + "/raw/kb_order");
                       AudioAttributes attrs = new AudioAttributes.Builder()
                           .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                          .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
+                          .setContentType(AudioAttributes.CONTENT_TYPE_SONIC).build();
                       NotificationChannel ch = new NotificationChannel("kb_order", "New order alerts", NotificationManager.IMPORTANCE_HIGH);
                       ch.setSound(sound, attrs);
                       ch.enableVibration(true);
