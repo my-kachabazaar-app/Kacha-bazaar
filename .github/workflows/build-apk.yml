@@ -67,7 +67,7 @@ jobs:
           mkdir app
           cd app
           npm init -y
-          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/push-notifications@6 @capacitor/splash-screen@6 @capacitor/app@6
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/push-notifications@6 @capacitor/splash-screen@6 @capacitor/app@6 @capacitor/share@6 @capacitor/filesystem@6
           mkdir www
           echo "<!doctype html><title>${{ matrix.appname }}</title>" > www/index.html
           cat > capacitor.config.json <<JSON
@@ -165,7 +165,7 @@ jobs:
                       Uri sound = Uri.parse("android.resource://" + getPackageName() + "/raw/kb_order");
                       AudioAttributes attrs = new AudioAttributes.Builder()
                           .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                          .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
+                          .setContentType(AudioAttributes.CONTENT_TYPE_SONIC).build();
                       NotificationChannel ch = new NotificationChannel("kb_order", "New order alerts", NotificationManager.IMPORTANCE_HIGH);
                       ch.setSound(sound, attrs);
                       ch.enableVibration(true);
