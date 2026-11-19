@@ -235,7 +235,7 @@ const I=(ic,t,sub,fn)=>`<div class="pi" onclick="${fn}"><span>${ic}</span><div><
 return `<div class="av"><div class="avc">${esc((me.name||"?")[0].toUpperCase())}</div><a href="#" onclick="tab='editp';render(true);return false">Edit Profile</a><div class="mu s2">${esc(me.phone)} · ${esc(me.email||"")}</div></div>
 <div class="tl"><div onclick="tab='orders';render(true)">🛍<br>Your Orders</div><div onclick="openWallet()">💳<br>Kacha Cash</div><div onclick="tab='wish';render(true)">♡<br>Your Wishlist</div></div>
 <div class="card kc stack" onclick="openWallet()"><div class="row"><b>👛 Kacha Cash &amp; Gift Card</b><span>›</span></div><div class="row"><span>Available Balance ₹${Math.round(me.wallet||0)}</span><button class="b l">Add Balance</button></div></div>
-<h2>Profile Information</h2><div class="card pl">${I("⭐","Rewards &amp; Earn","","soon()")}${I("📍","Saved Addresses",me.addr?"1 Address":"None","editA()")}${I("💳","Payments","","soon()")}${I("👤","Profile Details",esc(me.name),"tab='editp';render(true)")}</div>
+<h2>Profile Information</h2><div class="card pl">${I("⭐","Rewards &amp; Earn","","soon()")}${I("📍","Saved Addresses",((me.addrs||[]).length||(me.addr?1:0))?(((me.addrs||[]).length||1)+" saved"):"None","openAddrs()")}${I("💳","Payments","","soon()")}${I("👤","Profile Details",esc(me.name),"tab='editp';render(true)")}</div>
 <h2>More Options</h2><div class="card pl">${I("💬","Help &amp; Support","","tab='help';render(true)")}${I("☆","Suggest Products","","soon()")}${I("ℹ️","General Info","","alert('${STORE} - fresh groceries delivered fast.')")}</div>
 <button class="b l w" onclick="auth.signOut()">Log Out</button>`}
 function resV(){
@@ -303,7 +303,7 @@ const thumbs=o=>`<div class="th">${o.items.slice(0,4).map(i=>{const p=products.f
 var oSel="",lastKey="";
 const etaOf=o=>o.eta&&o.etaAt?{mins:o.eta,by:new Date(o.etaAt+o.eta*60000).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true}).toLowerCase()}:null;
 const etaLine=o=>{if(o.status=="delivered"||o.status=="cancelled")return "";const e=etaOf(o);return `<div class="etl">⏱ ${e?`Estimated delivery: <b>${e.by}</b> (within ${e.mins} mins)`:"Waiting for store confirmation"}</div>`};
-const pgHd=(t,r,b,sub)=>`<div class="ph"><button class="bk" onclick="${b||"tab='home';render(true)"}">‹</button><div class="tt"><b>${t}</b>${sub?`<div class="mu s2">${sub}</div>`:""}</div>${r||""}</div>`;
+var pgHd=(t,r,b,sub)=>`<div class="ph"><button class="bk" onclick="${b||"tab='home';render(true)"}">‹</button><div class="tt"><b>${t}</b>${sub?`<div class="mu s2">${sub}</div>`:""}</div>${r||""}</div>`;
 const tm2=t=>new Date(t).toLocaleString([],{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"});
 const ordDate=o=>{if(!(o.createdAt&&o.createdAt.seconds))return "";const d=new Date(o.createdAt.seconds*1000),n=d.getDate(),s=(n%100>10&&n%100<14)||n%10>3?"th":["th","st","nd","rd"][n%10];return `${n}${s} ${d.toLocaleString("en-GB",{month:"short"})} ${d.getFullYear()}, ${d.toLocaleString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true}).toLowerCase()}`};
 const stTxt=o=>({pending:["Order placed","w"],assigned:["Rider assigned","w"],accepted:["Rider heading to store","w"],collected:["Out for delivery","w"],arrived:["Rider arrived at your location","w"],delivered:["Order delivered",""],cancelled:["Order cancelled","x"]}[o.status]||["Order placed","w"]);
@@ -338,10 +338,10 @@ function render(force){
 const a=$("#app"),nav=$("#nav");$("#hbg").style.display="none";$("#top").className="";
 const key=[tab,lst,oSel,showAuth,scr,!!me].join();if(key!=lastKey){lastKey=key;a.className="";void a.offsetWidth;a.className="go"}
 if(showAuth&&!me){nav.innerHTML="";$("#top").innerHTML="";return swap(a,authV())}
-const fullPg=["orders","odet","editp","cart","checkout","zone","chat","wallet"].includes(tab);$("#top").innerHTML=fullPg?"":hdr();$("#top").className=tab=="home"?"h":"";$("#hbg").style.display=tab=="home"?"block":"none";
+const fullPg=["orders","odet","editp","cart","checkout","zone","chat","wallet","addrs","addnew"].includes(tab);$("#top").innerHTML=fullPg?"":hdr();$("#top").className=tab=="home"?"h":"";$("#hbg").style.display=tab=="home"?"block":"none";
 const N=[["home","🏠","Home"],["cat","▦","Category"],["cart","🛒","Cart"],["orders","🛍","Order"],["help","❓","Help"]];
 nav.innerHTML=N.map(t=>`<button class="${tab==t[0]?"on":""}" onclick="tab='${t[0]}';render(true);scrollTo(0,0)"><span>${t[1]}${t[0]=="cart"&&cnt()?`<i>${cnt()}</i>`:""}</span>${t[2]}</button>`).join("");
-swap(a,tab=="zone"?zoneV():tab=="chat"?chatV():tab=="wallet"?(me?walletPg():homeV()):tab=="cat"?catV():tab=="cart"?cartV():tab=="odet"?odetV():tab=="editp"?(me?editV():homeV()):tab=="checkout"?(me?checkoutV():cartV()):tab=="wish"?wishV():tab=="orders"?(me?myOrdersV():loginP("see your orders")):tab=="help"?helpV():tab=="list"?listV():tab=="prof"?(me?profV():homeV()):homeV())}
+swap(a,tab=="addrs"?addrsV():tab=="addnew"?addNewV():tab=="zone"?zoneV():tab=="chat"?chatV():tab=="wallet"?(me?walletPg():homeV()):tab=="cat"?catV():tab=="cart"?cartV():tab=="odet"?odetV():tab=="editp"?(me?editV():homeV()):tab=="checkout"?(me?checkoutV():cartV()):tab=="wish"?wishV():tab=="orders"?(me?myOrdersV():loginP("see your orders")):tab=="help"?helpV():tab=="list"?listV():tab=="prof"?(me?profV():homeV()):homeV())}
 </script>
 <script src="cld.js"></script>
 <script src="customer-pro.js"></script>

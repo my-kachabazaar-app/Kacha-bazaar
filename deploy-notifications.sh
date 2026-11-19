@@ -58,6 +58,20 @@ exports.depositUpdated=onDocumentUpdated({document:"deposits/{id}",region:R},e=>
 exports.orderCleanup=onDocumentUpdated({document:"orders/{id}",region:R},async e=>{const a=e.data.after.data(),b=e.data.before.data();
   if((a.status==="delivered"||a.status==="cancelled")&&a.voiceUrl&&b.status!==a.status){try{await destroy(a.voiceUrl)}catch(x){}await e.data.after.ref.update({voiceUrl:""})}
   if(a.status==="pending"&&a.coupon&&b.status!==a.status&&false){}});
+const {onSchedule}=require("firebase-functions/v2/scheduler");
+exports.dispatchTick=onSchedule({schedule:"every 1 minutes",region:R},async()=>{
+  const dsp=((await db.doc("settings/dispatch").get()).data())||{},wait=(dsp.waitMin||30)*60,rad=(dsp.radiusKm||1)*1000,max=dsp.maxOrders||5,eta=dsp.eta||20,now=Date.now()/1000;
+  const hv=(a,b)=>{const p=Math.PI/180,dl=(b.lat-a.lat)*p,dg=(b.lng-a.lng)*p,x=Math.sin(dl/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dg/2)**2;return 12742000*Math.asin(Math.sqrt(x))};
+  const ps=await db.collection("orders").where("status","==","pending").get(),P=[];ps.forEach(d=>P.push({ref:d.ref,id:d.id,...d.data()}));
+  const sec=o=>(o.createdAt&&o.createdAt.seconds)||now;
+  for(const o of P){const age=(now-sec(o))/60;if(age>10&&!o.alerted){await o.ref.update({alerted:true});await toRole("admin","⏰ Order waiting",`Order #${o.id.slice(-4).toUpperCase()} has waited ${Math.floor(age)} min`)}}
+  const pr=await db.collection("products").get();for(const d of pr.docs){const p=d.data();if(p.stock<=5&&!p.lowAlerted){await d.ref.update({lowAlerted:true});await toRole("admin",p.stock<=0?"⛔ Out of stock":"⚠️ Low stock",`${p.name}: ${p.stock} left`)}else if(p.stock>5&&p.lowAlerted)await d.ref.update({lowAlerted:false})}
+  if(!dsp.auto||!P.length)return;
+  P.sort((a,b)=>sec(a)-sec(b));const B=[];for(const o of P){let b=B.find(x=>x.l.length<max&&x.l.some(y=>y.lat!=null&&o.lat!=null&&hv(y,o)<=rad));if(b)b.l.push(o);else B.push({l:[o],t:sec(o)})}
+  const act=await db.collection("orders").where("status","in",["assigned","accepted","collected","arrived"]).get(),load={};act.forEach(d=>{const r=d.data().riderId;if(r)load[r]=(load[r]||0)+1});
+  const rs=await db.collection("users").where("role","==","rider").where("approved","==",true).where("available","==",true).get(),R2=[];rs.forEach(d=>{const s=d.data();if(s.status!=="suspended"&&s.status!=="terminated")R2.push({id:d.id,name:s.name})});
+  for(const b of B){if(!(b.l.length>=max||now-b.t>=wait))continue;const c=R2.filter(r=>(load[r.id]||0)+b.l.length<=max).sort((x,y)=>(load[x.id]||0)-(load[y.id]||0))[0];if(!c)continue;const bt=db.batch();b.l.forEach(o=>bt.update(o.ref,{riderId:c.id,riderName:c.name,status:"assigned",assignedAt:admin.firestore.FieldValue.serverTimestamp(),eta:eta,etaAt:Date.now()}));await bt.commit();load[c.id]=(load[c.id]||0)+b.l.length}
+});
 exports.orderCreated=onDocumentCreated({document:"orders/{id}",region:R},e=>{const o=e.data.data();
   return Promise.all([toRole("admin","New order 🛒",`${o.name} · ₹${o.total} · ${o.pay==="upi"?"UPI":"COD"}`),toUser(o.uid,"Order placed ✅","We have received your order. Waiting for store confirmation.")])});
 exports.orderUpdated=onDocumentUpdated({document:"orders/{id}",region:R},e=>{

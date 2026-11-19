@@ -388,7 +388,7 @@ const cod=o.pay=="cod";
 let h=`<div class="jh"><div class="s2">ORDER</div><div class="jid">#${oid(o)}</div><span class="tag s-${o.status}">${SL[o.status]}</span></div>`;
 h+=`<div class="card jp ${cod?"cod":"paid"}"><span>${cod?"💵 Collect cash":"✅ Online payment"}</span><b>${cod?rs(finalOf(o)):"Paid"}</b></div>`;
 if(o.status=="assigned")h+=`<div class="card stack"><b>🏬 Pick up from store</b><div class="mu">${esc(cfg.address||"Store address not added")}</div>${cfg.mapUrl?`<a class="b g" href="${esc(cfg.mapUrl)}" target="_blank">🔀 Store directions</a>`:""}</div>`;
-h+=`<div class="card stack"><b>📍 Delivery address</b><div>${esc(o.name)}</div><div class="mu">${esc(o.addr)}</div><div class="row"><button class="b" onclick="callCust('${o.id}')">📞 Call customer</button><a class="b g" href="${dirLink(o)}" target="_blank">🔀 Directions</a></div><div class="mu s2">Distance: ${kmTxt(o)}</div></div>`;
+h+=`<div class="card stack"><b>📍 Delivery address</b><div>${esc(o.name)}</div><div class="mu">${esc(o.addr)}</div>${o.instr||o.voiceUrl?`<div class="card" style="background:#fff7e6;margin:8px 0">📝 <b>Customer instructions</b><div>${esc(o.instr||"")}</div>${o.voiceUrl?`<audio controls src="${esc(o.voiceUrl)}" style="width:100%;margin-top:6px"></audio>`:""}</div>`:""}<div class="row"><button class="b" onclick="callCust('${o.id}')">📞 Call customer</button><a class="b g" href="${dirLink(o)}" target="_blank">🔀 Directions</a></div><div class="mu s2">Distance: ${kmTxt(o)}</div></div>`;
 if(o.status=="assigned")h+=slider("Slide to collect","collect");
 else if(o.status=="collected")h+=`<div class="card" style="text-align:center">✅ Order collected. Head to the customer.</div>`+slider("Slide when you arrive","arrive");
 else if(o.status=="arrived")h+=checkV(o)+slider2();
