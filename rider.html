@@ -249,8 +249,9 @@ const rs=n=>"₹"+Math.round(n||0);
 const fd=t=>new Date(t).toLocaleDateString([],{day:"numeric",month:"short",year:"numeric"});
 const clock=t=>new Date(t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
 const tm=m=>new Date(m).toLocaleString([],{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+const surgeAmt=()=>{const s=(cfg.surges||{})[me.rateCard];if(cfg.surges)return s&&s.on?+s.amt||0:0;return cfg.surgeOn?+cfg.surge||0:0};
 const kmNum=o=>{const p=(cfg.storeLoc||"").split(",");if(!o||o.lat==null||p.length<2||isNaN(+p[0]))return 0;const q=Math.PI/180,a=+p[0],b=+p[1],dl=(o.lat-a)*q,dg=(o.lng-b)*q,x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a*q)*Math.cos(o.lat*q)*Math.sin(dg/2)*Math.sin(dg/2);return 2*6371*Math.asin(Math.sqrt(x))};
-const calcEarn=o=>{const p=me.pay||{};if(p.type=="fixed")return 0;o=o||orders.find(x=>x.id==selO);const base=p.perOrder!=null?+p.perOrder:+cfg.pay||0;return Math.round(base+(+p.perKm||0)*kmNum(o)+(cfg.surgeOn?+cfg.surge||0:0)+(cfg.rainOn?+cfg.rain||0:0))};
+const calcEarn=o=>{const p=me.pay||{};if(p.type=="fixed")return 0;o=o||orders.find(x=>x.id==selO);const base=p.perOrder!=null?+p.perOrder:+cfg.pay||0;return Math.round(base+(+p.perKm||0)*kmNum(o)+surgeAmt()+(cfg.rainOn?+cfg.rain||0:0))};
 const mixed=p=>p.length>=8&&/[A-Za-z]/.test(p)&&/\d/.test(p);
 const KY=[["aadhaar","Aadhaar card (front side)"],["aadhaar2","Aadhaar card (back side)"],["pan","PAN card"],["dl","Driving licence (optional)"],["selfie","Selfie (take a live photo)"]];
 const brand=n=>{const w=String(n||STORE).trim().split(/\s+/);return `<span class="gr">${esc(w[0])}</span> <span class="og">${esc(w.slice(1).join(" "))}</span>`};
@@ -287,7 +288,7 @@ if(d.data().role!="rider"){alert("This number is registered in another app. Plea
 if(d.data().terminated||d.data().status=="terminated"){alert("Your account has been terminated.");return auth.signOut()}
 if(d.data().suspended||d.data().status=="suspended"){alert("Your account is suspended. Please contact the store manager.");return auth.signOut()}
 me=Object.assign({uid:u.uid},d.data());
-if(!u.emailVerified){scr="ver";return render(true)}
+if(!u.emailVerified&&!(u.providerData||[]).some(function(p){return p.providerId=="phone"})){scr="ver";return render(true)}
 if(!me.approved){scr=me.kyc=="submitted"?"wait":"kyc";return render(true)}
 tab="home";sub="";window.kbPush&&kbPush(db,me.uid,me.role);window.KBCALL&&KBCALL.init(db,me.uid,"rider",me.name);silence();startGps();startSession();
 db.collection("lookup").doc("r_"+me.phone).get().then(x=>{if(!x.exists)db.collection("lookup").doc("r_"+me.phone).set({email:u.email,uid:u.uid}).catch(()=>{})}).catch(()=>{});
@@ -440,7 +441,7 @@ function chPhoto(){pickCam(500,async d=>{try{await db.collection("users").doc(me
 async function chPhone(){const n=prompt("New mobile number (10 digits)");if(n===null)return;const m=n.replace(/\D/g,"").slice(-10);if(m.length!=10)return alert("Enter a valid 10-digit number");
 try{if((await db.collection("lookup").doc("r_"+m).get()).exists)return alert("This number is already used by another rider account.");const old=me.phone;await db.collection("users").doc(me.uid).update({phone:m});await db.collection("lookup").doc("r_"+m).set({email:auth.currentUser.email,uid:me.uid});await db.collection("lookup").doc("r_"+old).delete().catch(()=>{});me.phone=m;toast("Mobile number updated");render(true)}catch(e){alert(e.message)}}
 const nextPay=d=>{const n=new Date(),t=new Date(n.getFullYear(),n.getMonth(),Math.min(+d||1,28));if(t<=n)t.setMonth(t.getMonth()+1);return t.toLocaleDateString([],{day:"numeric",month:"long",year:"numeric"})};
-const rateV=()=>{const R=mediaOf("rate"),p=me.pay;return `<div class="rh row"><b>My Rate Card</b></div>`+(p?`<div class="card cashc"><div class="s2">${esc(p.name||"Rate card")}</div>${p.type=="fixed"?`<b style="font-size:28px">${rs(p.fixed)}</b><div class="s2">Fixed salary / month</div><div style="margin-top:6px">📅 Next salary: <b>${nextPay(p.payDay)}</b></div>`:`<b style="font-size:28px">${rs(p.perOrder)}</b><div class="s2">per order${p.perKm?` + ${rs(p.perKm)} per km`:""}</div><div style="margin-top:6px">Paid every week</div>`}</div>`:`<p class="mu">Your rate card has not been set yet.</p>`)+R.map(m=>`<img class="mimg" src="${esc(m.img)}" alt="">`).join("")};
+const rateV=()=>{const R=mediaOf("rate"),p=me.pay;return `<div class="rh row"><b>My Rate Card</b></div>`+(surgeAmt()?`<div class="card" style="background:#fff1cc">⚡ <b>Surge active</b> · +${rs(surgeAmt())} extra per order</div>`:"")+(p?`<div class="card cashc"><div class="s2">${esc(p.name||"Rate card")}</div>${p.type=="fixed"?`<b style="font-size:28px">${rs(p.fixed)}</b><div class="s2">Fixed salary / month</div><div style="margin-top:6px">📅 Next salary: <b>${nextPay(p.payDay)}</b></div>`:`<b style="font-size:28px">${rs(p.perOrder)}</b><div class="s2">per order${p.perKm?` + ${rs(p.perKm)} per km`:""}</div><div style="margin-top:6px">Paid every week</div>`}</div>`:`<p class="mu">Your rate card has not been set yet.</p>`)+R.map(m=>`<img class="mimg" src="${esc(m.img)}" alt="">`).join("")};
 var slips=[];
 const slipCard=x=>`<div class="card stack"><div class="row"><b>${esc(x.label)}</b><span style="background:#d3f5df;color:#0b4d27;border-radius:99px;padding:3px 10px;font-size:12px">Released</span></div>${x.type=="fixed"?`<div class="row"><span>Fixed salary</span><b>${rs(x.fixed)}</b></div>`:`<div class="row"><span>Orders delivered</span><b>${x.orders}</b></div><div class="row"><span>Distance</span><b>${x.km} km</b></div><div class="row"><span>Order earnings</span><b>${rs(x.earn)}</b></div>`}<div class="card cashc row"><span>Total payout</span><b style="font-size:22px">${rs(x.total)}</b></div><div class="mu s2">${esc(x.cardName||"")}</div></div>`;
 function payoutV(){const S=slips.slice().sort((a,b)=>(b.at||0)-(a.at||0));return `<div class="rh row"><b>💸 Payout & Payslip</b></div>`+(S.length?`<h2>Latest payslip</h2>${slipCard(S[0])}${S.length>1?`<h2>Earlier payslips</h2>${S.slice(1).map(slipCard).join("")}`:""}`:`<div class="card" style="text-align:center"><div style="font-size:42px">🧾</div><p class="mu">Your payslip will appear here when the store releases the payout.</p></div>`)}
@@ -517,5 +518,6 @@ if(tab=="home"&&!sub)bnInit();if(sub=="job")slInit();if(force)pushNav()}
 if(document.addEventListener)document.addEventListener("pointerdown",function(e){try{var t=e.target.closest&&e.target.closest(".b,.cta,.sd,.vd,.mi,.nav2");if(!t||t.closest(".sl"))return;var r=t.getBoundingClientRect(),s=Math.max(r.width,r.height)*1.3,d=document.createElement("span");d.className="rip";d.style.cssText="width:"+s+"px;height:"+s+"px;left:"+(e.clientX-r.left-s/2)+"px;top:"+(e.clientY-r.top-s/2)+"px";if(getComputedStyle(t).position=="static")t.style.position="relative";t.style.overflow="hidden";t.appendChild(d);setTimeout(function(){d.remove&&d.remove()},600)}catch(x){}},{passive:true});
 setTimeout(()=>{const s=document.getElementById("spl");if(s){s.style.opacity=0;setTimeout(()=>{s.remove&&s.remove()},700)}},2600);
 </script>
+<script src="rider-pro.js"></script>
 </body>
 </html>
