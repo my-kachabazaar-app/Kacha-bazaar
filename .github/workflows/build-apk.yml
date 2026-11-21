@@ -1,6 +1,11 @@
 name: Build APKs
 on:
   workflow_dispatch:
+    inputs:
+      native_otp:
+        description: "Use native phone OTP (no captcha). Untick if the build fails."
+        type: boolean
+        default: true
 permissions:
   contents: write
 jobs:
@@ -68,6 +73,7 @@ jobs:
           cd app
           npm init -y
           npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/push-notifications@6 @capacitor/splash-screen@6 @capacitor/app@6 @capacitor/share@6 @capacitor/filesystem@6
+          if [ "${{ inputs.native_otp }}" != "false" ]; then npm i @capacitor-firebase/authentication@6; fi
           mkdir www
           echo "<!doctype html><title>${{ matrix.appname }}</title>" > www/index.html
           cat > capacitor.config.json <<JSON
@@ -77,11 +83,13 @@ jobs:
             "webDir": "www",
             "server": { "url": "${{ matrix.url }}", "androidScheme": "https" },
             "plugins": {
+              "FirebaseAuthentication": { "skipNativeAuth": true, "providers": ["phone"] },
               "SplashScreen": { "launchShowDuration": ${{ matrix.splash }}, "launchAutoHide": true, "backgroundColor": "#FFFFFF", "androidScaleType": "CENTER_INSIDE", "showSpinner": false }
             }
           }
           JSON
           npx cap add android
+          sed -i 's/minSdkVersion = 22/minSdkVersion = 23/' android/variables.gradle || true
       - name: Make icons and splash screen from the logo
         run: |
           pip install pillow
@@ -165,7 +173,7 @@ jobs:
                       Uri sound = Uri.parse("android.resource://" + getPackageName() + "/raw/kb_order");
                       AudioAttributes attrs = new AudioAttributes.Builder()
                           .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                          .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
+                          .setContentType(AudioAttributes.CONTENT_TYPE_SONIC).build();
                       NotificationChannel ch = new NotificationChannel("kb_order", "New order alerts", NotificationManager.IMPORTANCE_HIGH);
                       ch.setSound(sound, attrs);
                       ch.enableVibration(true);
