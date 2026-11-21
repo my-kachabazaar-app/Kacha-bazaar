@@ -10,6 +10,7 @@ service cloud.firestore {
         && request.resource.data.wallet >= 0
         && request.resource.data.wallet == resource.data.get('wallet', 0) - o.walletUsed;
     }
+    function verified() { return request.auth.token.email_verified == true || ('phone_number' in request.auth.token); }
     function isAdmin() { return signedIn() && userDoc(request.auth.uid).role == 'admin' && userDoc(request.auth.uid).get('approved', true) == true; }
     function riderCap() {
       let p = /databases/$(database)/documents/settings/rider;
@@ -40,7 +41,8 @@ service cloud.firestore {
         && request.resource.data.get('adminRole', '') == resource.data.get('adminRole', '')
         && request.resource.data.get('pay', {}) == resource.data.get('pay', {})
         && request.resource.data.get('docVerified', {}) == resource.data.get('docVerified', {})
-        && request.resource.data.get('rateCard', '') == resource.data.get('rateCard', ''));
+        && request.resource.data.get('rateCard', '') == resource.data.get('rateCard', '')
+        && (resource.data.get('approved', false) == false || request.resource.data.get('storeId', '') == resource.data.get('storeId', '')));
     }
     match /users/{u}/kyc/{t} {
       allow read: if signedIn() && (request.auth.uid == u || isAdmin());
@@ -123,9 +125,9 @@ service cloud.firestore {
         && !userDoc(request.auth.uid).get('blocked', false)
         && (request.resource.data.get('pay', '') != 'wallet' || userDoc(request.auth.uid).get('wallet', 0) >= request.resource.data.get('walletUsed', 0));
       allow read: if signedIn() && (isAdmin() || resource.data.uid == request.auth.uid
-        || (resource.data.riderId == request.auth.uid && request.auth.token.email_verified == true));
+        || (resource.data.riderId == request.auth.uid && verified()));
       allow update: if isAdmin() || (signedIn() && resource.data.riderId == request.auth.uid
-        && request.auth.token.email_verified == true
+        && verified()
         && userDoc(request.auth.uid).get('status', 'active') == 'active'
         && !(resource.data.status in ['delivered', 'cancelled'])
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'collectedAt', 'arrivedAt', 'deliveredAt', 'cancelledAt', 'cancelReason', 'earn', 'finalTotal', 'flags', 'returnPending'])
